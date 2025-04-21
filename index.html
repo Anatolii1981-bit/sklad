@@ -287,8 +287,17 @@
         item.catalog.toLowerCase().includes(filter) ||
         item.location.toLowerCase().includes(filter)
       )) {
-        const row = tbody.insertRow();
-        row.insertCell(0).textContent = index + 1;
+        let counter = 1;
+partsData.forEach((item, index) => {
+  if (item.quantity > 0 && (
+    item.name.toLowerCase().includes(filter) ||
+    item.catalog.toLowerCase().includes(filter) ||
+    item.location.toLowerCase().includes(filter)
+  )) {
+    const row = tbody.insertRow();
+    row.insertCell(0).textContent = counter++;
+    ...
+
         row.insertCell(1).textContent = item.name;
         row.insertCell(2).textContent = item.catalog;
         row.insertCell(3).textContent = item.quantity;
