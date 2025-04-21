@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Склад запчастей с техникой</title>
+  <title>Склад запчастей + История</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     body { font-family: sans-serif; padding: 20px; }
@@ -10,7 +10,7 @@
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     th { background-color: #f0f0f0; }
     input, button, select { padding: 6px; margin: 5px 5px 5px 0; }
-    .edit-btn, .delete-btn, .install-btn { cursor: pointer; color: blue; }
+    .edit-btn, .delete-btn, .install-btn, .history-btn { cursor: pointer; color: blue; }
 
     .modal {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -21,16 +21,16 @@
       background: white; padding: 20px; border-radius: 5px; min-width: 300px;
     }
 
-    .modal select, .modal input {
-      width: 100%; margin-top: 5px;
-    }
-
     #installRow {
       display: none;
       padding: 10px;
       border: 1px solid #ccc;
       margin-bottom: 20px;
       background: #f9f9f9;
+    }
+
+    #historyTable {
+      margin-top: 30px;
     }
   </style>
 </head>
@@ -53,7 +53,6 @@
       <th>Место хранения</th>
       <th>Дата поступления</th>
       <th>Дата установки</th>
-      <th>Техника</th>
       <th>Действия</th>
     </tr>
   </thead>
@@ -110,15 +109,32 @@
     <button onclick="closeTechManager()">Закрыть</button>
   </div>
 </div>
+
+<!-- 🔻 Таблица истории установок -->
+<h3>История установок</h3>
+<table id="historyTable">
+  <thead>
+    <tr>
+      <th>Каталожный номер</th>
+      <th>Наименование</th>
+      <th>Количество</th>
+      <th>Дата установки</th>
+      <th>Техника</th>
+    </tr>
+  </thead>
+  <tbody id="historyBody"></tbody>
+</table>
 <script>
   let partsData = [];
   let techGroups = JSON.parse(localStorage.getItem("techGroups") || '{}');
+  let historyLog = JSON.parse(localStorage.getItem("historyLog") || '[]');
   let editIndex = null;
   let currentInstallIndex = null;
 
   function saveToLocalStorage() {
     localStorage.setItem("partsData", JSON.stringify(partsData));
     localStorage.setItem("techGroups", JSON.stringify(techGroups));
+    localStorage.setItem("historyLog", JSON.stringify(historyLog));
   }
 
   function toggleForm(edit = false, index = null) {
@@ -146,11 +162,11 @@
   function saveEntry() {
     const name = document.getElementById("name").value.trim();
     const catalog = document.getElementById("catalog").value.trim();
-    const quantity = document.getElementById("quantity").value.trim();
+    const quantity = parseInt(document.getElementById("quantity").value.trim());
     const location = document.getElementById("location").value.trim();
     const installed = document.getElementById("installed").value;
 
-    if (!name || !catalog || !quantity || !location) {
+    if (!name || !catalog || isNaN(quantity) || !location) {
       alert("Заполните все поля кроме даты установки");
       return;
     }
@@ -164,8 +180,7 @@
       quantity,
       location,
       installed,
-      arrival,
-      equipment: ""
+      arrival
     };
 
     if (editIndex !== null) {
@@ -235,10 +250,19 @@
 
     part.quantity -= qty;
     part.installed = new Date().toISOString().split("T")[0];
-    part.equipment = tech;
+
+    // Добавление в историю
+    historyLog.push({
+      catalog: part.catalog,
+      name: part.name,
+      qty,
+      date: part.installed,
+      tech: `${group} — ${tech}`
+    });
 
     saveToLocalStorage();
     renderTable();
+    renderHistory();
     cancelInstall();
   }
 
@@ -248,11 +272,11 @@
     const filter = document.getElementById("searchInput").value.toLowerCase();
 
     partsData.forEach((item, index) => {
-      if (
+      if (item.quantity > 0 && (
         item.name.toLowerCase().includes(filter) ||
         item.catalog.toLowerCase().includes(filter) ||
         item.location.toLowerCase().includes(filter)
-      ) {
+      )) {
         const row = tbody.insertRow();
         row.insertCell(0).textContent = index + 1;
         row.insertCell(1).textContent = item.name;
@@ -261,28 +285,50 @@
         row.insertCell(4).textContent = item.location;
         row.insertCell(5).textContent = item.arrival;
         row.insertCell(6).textContent = item.installed || "";
-        row.insertCell(7).textContent = item.equipment || "";
-        row.insertCell(8).innerHTML = `
+        row.insertCell(7).innerHTML = `
           <span class="edit-btn" onclick="toggleForm(true, ${index})">✏</span> |
           <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
+          <span class="history-btn" onclick="showHistory('${item.catalog}')">📜 История</span> |
           <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>`;
       }
     });
   }
 
+  function renderHistory(catalogFilter = null) {
+    const tbody = document.getElementById("historyBody");
+    tbody.innerHTML = "";
+
+    historyLog.forEach(entry => {
+      if (!catalogFilter || entry.catalog === catalogFilter) {
+        const row = tbody.insertRow();
+        row.insertCell(0).textContent = entry.catalog;
+        row.insertCell(1).textContent = entry.name;
+        row.insertCell(2).textContent = entry.qty;
+        row.insertCell(3).textContent = entry.date;
+        row.insertCell(4).textContent = entry.tech;
+      }
+    });
+  }
+
+  function showHistory(catalog) {
+    renderHistory(catalog);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+
   function exportToExcel() {
-    const ws_data = [["№", "Наименование", "Каталожный номер", "Количество", "Место хранения", "Дата поступления", "Дата установки", "Техника"]];
+    const ws_data = [["№", "Наименование", "Каталожный номер", "Количество", "Место хранения", "Дата поступления", "Дата установки"]];
     partsData.forEach((item, index) => {
-      ws_data.push([
-        index + 1,
-        item.name,
-        item.catalog,
-        item.quantity,
-        item.location,
-        item.arrival,
-        item.installed || "",
-        item.equipment || ""
-      ]);
+      if (item.quantity > 0) {
+        ws_data.push([
+          index + 1,
+          item.name,
+          item.catalog,
+          item.quantity,
+          item.location,
+          item.arrival,
+          item.installed || ""
+        ]);
+      }
     });
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
@@ -344,11 +390,14 @@
   window.onload = () => {
     partsData = JSON.parse(localStorage.getItem("partsData") || "[]");
     techGroups = JSON.parse(localStorage.getItem("techGroups") || "{}");
+    historyLog = JSON.parse(localStorage.getItem("historyLog") || "[]");
     renderTable();
+    renderHistory();
   };
 
   document.getElementById("searchInput").addEventListener("input", renderTable);
 </script>
 </body>
 </html>
+
 
