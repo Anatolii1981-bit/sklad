@@ -118,7 +118,8 @@
 <h3>История установок</h3>
 <input type="text" id="historySearchInput" placeholder="Поиск по каталожному номеру" oninput="renderHistory()">
 
-<table id="historyTable">
+<table id="historyTable" style="display:none;">
+
   <thead>
     <tr>
       <th>Каталожный номер</th>
@@ -441,7 +442,8 @@
     saveToLocalStorage();
     renderTechList();
   }
-  let historyVisible = true;
+ let historyVisible = false;
+
 
 function toggleHistory() {
   historyVisible = !historyVisible;
