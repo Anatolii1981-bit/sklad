@@ -115,8 +115,9 @@
   </div>
 </div>
 
-<!-- История установок -->
 <h3>История установок</h3>
+<input type="text" id="historySearchInput" placeholder="Поиск по каталожному номеру" oninput="renderHistory()">
+
 <table id="historyTable">
   <thead>
     <tr>
@@ -303,19 +304,28 @@
   }
 
   function renderHistory(filterCatalog = null) {
-    const tbody = document.getElementById("historyBody");
-    tbody.innerHTML = "";
-    historyLog.forEach(entry => {
-      if (!filterCatalog || entry.catalog === filterCatalog) {
-        const row = tbody.insertRow();
-        row.insertCell(0).textContent = entry.catalog;
-        row.insertCell(1).textContent = entry.name;
-        row.insertCell(2).textContent = entry.qty;
-        row.insertCell(3).textContent = entry.date;
-        row.insertCell(4).textContent = entry.tech;
-      }
-    });
-  }
+  const tbody = document.getElementById("historyBody");
+  tbody.innerHTML = "";
+
+  const inputFilter = document.getElementById("historySearchInput")?.value.toLowerCase() || "";
+  const catalogFilter = filterCatalog?.toLowerCase() || "";
+
+  historyLog.forEach(entry => {
+    const entryCatalog = entry.catalog.toLowerCase();
+    if (
+      (!catalogFilter || entryCatalog === catalogFilter) &&
+      (!inputFilter || entryCatalog.includes(inputFilter))
+    ) {
+      const row = tbody.insertRow();
+      row.insertCell(0).textContent = entry.catalog;
+      row.insertCell(1).textContent = entry.name;
+      row.insertCell(2).textContent = entry.qty;
+      row.insertCell(3).textContent = entry.date;
+      row.insertCell(4).textContent = entry.tech;
+    }
+  });
+}
+
 
   function exportToExcel() {
     const ws_data = [["№", "Наименование", "Каталожный номер", "Количество", "Место хранения", "Дата поступления", "Дата установки"]];
