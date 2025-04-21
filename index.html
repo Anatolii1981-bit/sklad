@@ -300,10 +300,9 @@
       row.insertCell(5).textContent = item.arrival;
       row.insertCell(6).textContent = item.installed || "";
       row.insertCell(7).innerHTML = `
-        <span class="edit-btn" onclick="toggleForm(true, ${index})">✏</span> |
-        <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
-        <span class="history-btn" onclick="renderHistory('${item.catalog}')">📜 История</span> |
-        <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>`;
+  <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
+  <span class="history-btn" onclick="renderHistory('${item.catalog}')">📜 История</span> |
+  <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>`;
     }
   });
 }
