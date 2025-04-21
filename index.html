@@ -308,7 +308,6 @@ row.insertCell(2).textContent = item.name;
       row.insertCell(6).textContent = item.installed || "";
       row.insertCell(7).innerHTML = `
   <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
-  <span class="history-btn" onclick="renderHistory('${item.catalog}')">📜 История</span> |
   <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>`;
     }
   });
