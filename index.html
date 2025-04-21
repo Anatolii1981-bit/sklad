@@ -465,7 +465,9 @@ function addTech() {
 }
 
 </script>
- window.onload = () => {
+</body>
+</html>
+window.onload = () => {
   toggleForm(false); // Скрываем форму при загрузке
   partsData = JSON.parse(localStorage.getItem("partsData") || "[]");
   techGroups = JSON.parse(localStorage.getItem("techGroups") || "{}");
@@ -476,8 +478,6 @@ function addTech() {
   renderArrivalHistory();
 };
 
-</body>
-</html>
 
 
 
