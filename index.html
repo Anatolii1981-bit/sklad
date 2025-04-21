@@ -465,6 +465,20 @@ function addTech() {
     form.style.display = (form.style.display === "none") ? "block" : "none";
   }
 }
+function updateTechOptions() {
+  const group = document.getElementById("installGroup").value;
+  const select = document.getElementById("installTech");
+  select.innerHTML = '<option value="">-- выберите технику --</option>';
+
+  if (group && techGroups[group]) {
+    techGroups[group].forEach(tech => {
+      const option = document.createElement("option");
+      option.value = tech;
+      option.textContent = tech;
+      select.appendChild(option);
+    });
+  }
+}
 
 </script>
 </body>
