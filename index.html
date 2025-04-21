@@ -9,7 +9,7 @@
     table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     th { background-color: #f0f0f0; }
-    input, button { padding: 6px; margin: 5px 5px 5px 0; }
+    input, select, button { padding: 6px; margin: 5px 5px 5px 0; }
     #formRow { display: none; margin-bottom: 10px; }
     .edit-btn, .delete-btn { cursor: pointer; color: blue; }
   </style>
@@ -19,6 +19,8 @@
 <h2>Склад хранения запчастей</h2>
 
 <input type="text" id="searchInput" placeholder="Поиск...">
+<input type="date" id="filterDate" placeholder="Фильтр по дате установки">
+<button onclick="clearDateFilter()">Очистить дату</button>
 
 <table id="partsTable">
   <thead>
@@ -28,6 +30,7 @@
       <th>Каталожный номер</th>
       <th>Количество</th>
       <th>Место хранения</th>
+      <th>Техника</th>
       <th>Дата поступления</th>
       <th>Дата установки</th>
       <th>Действия</th>
@@ -41,6 +44,16 @@
   <input type="text" id="catalog" placeholder="Каталожный номер">
   <input type="number" id="quantity" placeholder="Количество">
   <input type="text" id="location" placeholder="Место хранения">
+
+  <select id="equipment">
+    <option value="">-- Выбрать технику --</option>
+    <option value="Трактор">Трактор</option>
+    <option value="Комбайн">Комбайн</option>
+    <option value="Опрыскиватель">Опрыскиватель</option>
+    <option value="Сеялка">Сеялка</option>
+    <option value="Другое">Другое</option>
+  </select>
+
   <input type="date" id="installed" placeholder="Дата установки">
   <button onclick="setTodayInstalled()">Установлено сегодня</button>
   <button onclick="saveEntry()">Сохранить</button>
@@ -68,12 +81,14 @@
   function toggleForm(edit = false, index = null) {
     const form = document.getElementById("formRow");
     form.style.display = form.style.display === "none" || !form.style.display ? "block" : "none";
+
     if (!edit) {
       document.getElementById("name").value = "";
       document.getElementById("catalog").value = "";
       document.getElementById("quantity").value = "";
       document.getElementById("location").value = "";
       document.getElementById("installed").value = "";
+      document.getElementById("equipment").value = "";
       editIndex = null;
     } else {
       const item = partsData[index];
@@ -82,6 +97,7 @@
       document.getElementById("quantity").value = item.quantity;
       document.getElementById("location").value = item.location;
       document.getElementById("installed").value = item.installed || "";
+      document.getElementById("equipment").value = item.equipment || "";
       editIndex = index;
     }
   }
@@ -97,6 +113,7 @@
     const quantity = document.getElementById("quantity").value.trim();
     const location = document.getElementById("location").value.trim();
     const installed = document.getElementById("installed").value;
+    const equipment = document.getElementById("equipment").value;
 
     if (!name || !catalog || !quantity || !location) {
       alert("Заполните все поля кроме даты установки");
@@ -112,7 +129,8 @@
       quantity,
       location,
       installed,
-      arrival: editIndex !== null ? partsData[editIndex].arrival : arrival
+      arrival: editIndex !== null ? partsData[editIndex].arrival : arrival,
+      equipment
     };
 
     if (editIndex !== null) {
@@ -139,24 +157,31 @@
     const tbody = document.querySelector("#partsTable tbody");
     tbody.innerHTML = "";
 
-    const filter = document.getElementById("searchInput").value.toLowerCase();
+    const searchFilter = document.getElementById("searchInput").value.toLowerCase();
+    const dateFilter = document.getElementById("filterDate").value;
 
     partsData.forEach((item, index) => {
-      if (
-        item.name.toLowerCase().includes(filter) ||
-        item.catalog.toLowerCase().includes(filter) ||
-        item.location.toLowerCase().includes(filter)
-      ) {
+      const matchSearch =
+        item.name.toLowerCase().includes(searchFilter) ||
+        item.catalog.toLowerCase().includes(searchFilter) ||
+        item.location.toLowerCase().includes(searchFilter) ||
+        (item.equipment && item.equipment.toLowerCase().includes(searchFilter));
+
+      const matchDate =
+        !dateFilter || (item.installed && item.installed === dateFilter);
+
+      if (matchSearch && matchDate) {
         const row = tbody.insertRow();
         row.insertCell(0).textContent = index + 1;
         row.insertCell(1).textContent = item.name;
         row.insertCell(2).textContent = item.catalog;
         row.insertCell(3).textContent = item.quantity;
         row.insertCell(4).textContent = item.location;
-        row.insertCell(5).textContent = item.arrival;
-        row.insertCell(6).textContent = item.installed || "";
+        row.insertCell(5).textContent = item.equipment || "";
+        row.insertCell(6).textContent = item.arrival;
+        row.insertCell(7).textContent = item.installed || "";
 
-        const actionCell = row.insertCell(7);
+        const actionCell = row.insertCell(8);
         actionCell.innerHTML = `
           <span class="edit-btn" onclick="toggleForm(true, ${index})">✏ Редакт</span> |
           <span class="delete-btn" onclick="deleteRow(${index})">🗑 Удалить</span>
@@ -167,7 +192,7 @@
 
   function exportToExcel() {
     const ws_data = [
-      ["№", "Наименование", "Каталожный номер", "Количество", "Место хранения", "Дата поступления", "Дата установки"]
+      ["№", "Наименование", "Каталожный номер", "Количество", "Место хранения", "Техника", "Дата поступления", "Дата установки"]
     ];
     partsData.forEach((item, index) => {
       ws_data.push([
@@ -176,6 +201,7 @@
         item.catalog,
         item.quantity,
         item.location,
+        item.equipment || "",
         item.arrival,
         item.installed || ""
       ]);
@@ -187,9 +213,16 @@
     XLSX.writeFile(wb, "sklad.xlsx");
   }
 
+  function clearDateFilter() {
+    document.getElementById("filterDate").value = "";
+    renderTable();
+  }
+
   document.getElementById("searchInput").addEventListener("input", renderTable);
+  document.getElementById("filterDate").addEventListener("input", renderTable);
   window.onload = loadFromLocalStorage;
 </script>
 
 </body>
-</html
+</html>
+
