@@ -50,10 +50,10 @@
 
 <table id="partsTable">
   <thead>
-    <tr>
-      <th>№</th>
-      <th>Наименование</th>
-      <th>Каталожный номер</th>
+   <tr>
+  <th>№</th>
+  <th>Каталожный номер</th>
+  <th>Наименование</th>
       <th>Количество</th>
       <th>Место хранения</th>
       <th>Дата поступления</th>
@@ -300,8 +300,8 @@
     ) {
       const row = tbody.insertRow();
       row.insertCell(0).textContent = counter++; // новый номер по порядку
-      row.insertCell(1).textContent = item.name;
-      row.insertCell(2).textContent = item.catalog;
+     row.insertCell(1).textContent = item.catalog;
+row.insertCell(2).textContent = item.name;
       row.insertCell(3).textContent = item.quantity;
       row.insertCell(4).textContent = item.location;
       row.insertCell(5).textContent = item.arrival;
