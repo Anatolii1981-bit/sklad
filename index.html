@@ -42,6 +42,7 @@
   <input type="number" id="quantity" placeholder="Количество">
   <input type="text" id="location" placeholder="Место хранения">
   <input type="date" id="installed" placeholder="Дата установки">
+  <button onclick="setTodayInstalled()">Установлено сегодня</button>
   <button onclick="saveEntry()">Сохранить</button>
 </div>
 
@@ -83,6 +84,11 @@
       document.getElementById("installed").value = item.installed || "";
       editIndex = index;
     }
+  }
+
+  function setTodayInstalled() {
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("installed").value = today;
   }
 
   function saveEntry() {
@@ -186,5 +192,4 @@
 </script>
 
 </body>
-</html>
-
+</html
