@@ -19,8 +19,6 @@
 <h2>Склад хранения запчастей</h2>
 
 <input type="text" id="searchInput" placeholder="Поиск...">
-<input type="date" id="filterDate" placeholder="Фильтр по дате установки">
-<button onclick="clearDateFilter()">Очистить дату</button>
 
 <table id="partsTable">
   <thead>
@@ -158,7 +156,6 @@
     tbody.innerHTML = "";
 
     const searchFilter = document.getElementById("searchInput").value.toLowerCase();
-    const dateFilter = document.getElementById("filterDate").value;
 
     partsData.forEach((item, index) => {
       const matchSearch =
@@ -167,10 +164,7 @@
         item.location.toLowerCase().includes(searchFilter) ||
         (item.equipment && item.equipment.toLowerCase().includes(searchFilter));
 
-      const matchDate =
-        !dateFilter || (item.installed && item.installed === dateFilter);
-
-      if (matchSearch && matchDate) {
+      if (matchSearch) {
         const row = tbody.insertRow();
         row.insertCell(0).textContent = index + 1;
         row.insertCell(1).textContent = item.name;
@@ -213,16 +207,9 @@
     XLSX.writeFile(wb, "sklad.xlsx");
   }
 
-  function clearDateFilter() {
-    document.getElementById("filterDate").value = "";
-    renderTable();
-  }
-
   document.getElementById("searchInput").addEventListener("input", renderTable);
-  document.getElementById("filterDate").addEventListener("input", renderTable);
   window.onload = loadFromLocalStorage;
 </script>
 
 </body>
 </html>
-
