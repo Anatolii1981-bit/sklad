@@ -452,7 +452,30 @@ function addTech() {
   saveToLocalStorage();
   renderTechList();
 }
+  function toggleForm(force = null) {
+  const form = document.getElementById("formRow");
+  if (!form) return;
+  if (force === true) {
+    form.style.display = "block";
+  } else if (force === false) {
+    form.style.display = "none";
+  } else {
+    form.style.display = (form.style.display === "none") ? "block" : "none";
+  }
+}
+
 </script>
+  window.onload = () => {
+  toggleForm(false); // Скрываем форму при загрузке
+  partsData = JSON.parse(localStorage.getItem("partsData") || "[]");
+  techGroups = JSON.parse(localStorage.getItem("techGroups") || "{}");
+  historyLog = JSON.parse(localStorage.getItem("historyLog") || "[]");
+  arrivalLog = JSON.parse(localStorage.getItem("arrivalLog") || "[]");
+  renderTable();
+  renderHistory();
+  renderArrivalHistory();
+};
+
 </body>
 </html>
 
