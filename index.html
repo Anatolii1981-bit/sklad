@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Склад запчастей + История</title>
+  <title>Склад запчастей</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     body { font-family: sans-serif; padding: 20px; }
@@ -42,6 +42,11 @@
 <button onclick="exportToExcel()">Экспорт склада</button>
 <button onclick="exportTechPark()">Экспорт техники</button>
 <button onclick="openTechManager()">Управление техникой</button>
+<button onclick="saveToJSON()">💾 Сохранить в JSON</button>
+<input type="file" id="jsonFileInput" style="display:none" onchange="loadFromJSON(event)">
+<button onclick="document.getElementById('jsonFileInput').click()">📂 Загрузить из JSON</button>
+<button onclick="renderHistory()">📜 Общая история</button>
+<button onclick="exportHistoryToExcel()">📤 Экспорт истории</button>
 
 <table id="partsTable">
   <thead>
@@ -59,7 +64,7 @@
   <tbody></tbody>
 </table>
 
-<!-- 🔻 Форма добавления новой запчасти -->
+<!-- Форма добавления -->
 <div id="formRow" style="display:none;">
   <input id="name" placeholder="Наименование">
   <input id="catalog" placeholder="Каталожный номер">
@@ -69,7 +74,7 @@
   <button onclick="saveEntry()">Сохранить</button>
 </div>
 
-<!-- 🔻 Форма установки запчасти -->
+<!-- Форма установки -->
 <div id="installRow">
   <strong>Установка запчасти:</strong><br>
   <label>Количество:</label>
@@ -91,7 +96,7 @@
   <button onclick="cancelInstall()">Отмена</button>
 </div>
 
-<!-- 🔻 Модальное окно управления техникой -->
+<!-- Управление техникой -->
 <div class="modal" id="techModal">
   <div class="modal-content">
     <h3>Управление техникой</h3>
@@ -110,7 +115,7 @@
   </div>
 </div>
 
-<!-- 🔻 Таблица истории установок -->
+<!-- История установок -->
 <h3>История установок</h3>
 <table id="historyTable">
   <thead>
@@ -167,7 +172,7 @@
     const installed = document.getElementById("installed").value;
 
     if (!name || !catalog || isNaN(quantity) || !location) {
-      alert("Заполните все поля кроме даты установки");
+      alert("Заполните все поля");
       return;
     }
 
@@ -227,31 +232,26 @@
       techSelect.appendChild(opt);
     }
   }
+
   function confirmInstall() {
     const qty = parseInt(document.getElementById("installQty").value);
     const group = document.getElementById("installGroup").value;
     const tech = document.getElementById("installTech").value;
 
-    if (currentInstallIndex === null || isNaN(qty) || qty <= 0) {
-      alert("Введите корректное количество");
-      return;
-    }
-
-    if (!group || !tech) {
-      alert("Выберите группу и технику");
+    if (currentInstallIndex === null || isNaN(qty) || qty <= 0 || !group || !tech) {
+      alert("Заполните все поля установки");
       return;
     }
 
     const part = partsData[currentInstallIndex];
     if (qty > parseInt(part.quantity)) {
-      alert("Нельзя установить больше, чем есть на складе");
+      alert("Нельзя установить больше, чем на складе");
       return;
     }
 
     part.quantity -= qty;
     part.installed = new Date().toISOString().split("T")[0];
 
-    // Добавление в историю
     historyLog.push({
       catalog: part.catalog,
       name: part.name,
@@ -264,6 +264,14 @@
     renderTable();
     renderHistory();
     cancelInstall();
+  }
+
+  function deleteRow(index) {
+    if (confirm("Удалить эту строку?")) {
+      partsData.splice(index, 1);
+      saveToLocalStorage();
+      renderTable();
+    }
   }
 
   function renderTable() {
@@ -288,18 +296,17 @@
         row.insertCell(7).innerHTML = `
           <span class="edit-btn" onclick="toggleForm(true, ${index})">✏</span> |
           <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
-          <span class="history-btn" onclick="showHistory('${item.catalog}')">📜 История</span> |
+          <span class="history-btn" onclick="renderHistory('${item.catalog}')">📜 История</span> |
           <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>`;
       }
     });
   }
 
-  function renderHistory(catalogFilter = null) {
+  function renderHistory(filterCatalog = null) {
     const tbody = document.getElementById("historyBody");
     tbody.innerHTML = "";
-
     historyLog.forEach(entry => {
-      if (!catalogFilter || entry.catalog === catalogFilter) {
+      if (!filterCatalog || entry.catalog === filterCatalog) {
         const row = tbody.insertRow();
         row.insertCell(0).textContent = entry.catalog;
         row.insertCell(1).textContent = entry.name;
@@ -308,11 +315,6 @@
         row.insertCell(4).textContent = entry.tech;
       }
     });
-  }
-
-  function showHistory(catalog) {
-    renderHistory(catalog);
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }
 
   function exportToExcel() {
@@ -337,14 +339,57 @@
   }
 
   function exportTechPark() {
-    const XLSXData = [["Группа", "Техника"]];
-    for (const group in techGroups) {
-      techGroups[group].forEach(item => XLSXData.push([group, item]));
+    const data = [["Группа", "Техника"]];
+    for (let group in techGroups) {
+      techGroups[group].forEach(tech => data.push([group, tech]));
     }
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(XLSXData);
+    const ws = XLSX.utils.aoa_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, "Техника");
     XLSX.writeFile(wb, "techpark.xlsx");
+  }
+
+  function exportHistoryToExcel() {
+    const data = [["Каталожный номер", "Наименование", "Количество", "Дата установки", "Техника"]];
+    historyLog.forEach(h => {
+      data.push([h.catalog, h.name, h.qty, h.date, h.tech]);
+    });
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, "История");
+    XLSX.writeFile(wb, "history.xlsx");
+  }
+
+  function saveToJSON() {
+    const backup = { partsData, techGroups, historyLog };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sklad_backup.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function loadFromJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const json = JSON.parse(e.target.result);
+        partsData = json.partsData || [];
+        techGroups = json.techGroups || {};
+        historyLog = json.historyLog || [];
+        saveToLocalStorage();
+        renderTable();
+        renderHistory();
+        alert("Данные успешно загружены из JSON!");
+      } catch (err) {
+        alert("Ошибка загрузки: " + err.message);
+      }
+    };
+    reader.readAsText(file);
   }
 
   function openTechManager() {
@@ -399,5 +444,6 @@
 </script>
 </body>
 </html>
+
 
 
