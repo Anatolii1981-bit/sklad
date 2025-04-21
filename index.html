@@ -471,8 +471,10 @@ document.getElementById("catalog").addEventListener("input", () => {
   const existing = partsData.find(p => p.catalog.toLowerCase() === cat);
   if (existing) {
     document.getElementById("name").value = existing.name;
+    document.getElementById("location").value = existing.location;
   }
 });
+
 
   window.onload = () => {
     partsData = JSON.parse(localStorage.getItem("partsData") || "[]");
