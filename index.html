@@ -277,41 +277,37 @@
   }
 
   function renderTable() {
-    const tbody = document.querySelector("#partsTable tbody");
-    tbody.innerHTML = "";
-    const filter = document.getElementById("searchInput").value.toLowerCase();
+  const tbody = document.querySelector("#partsTable tbody");
+  tbody.innerHTML = "";
+  const filter = document.getElementById("searchInput").value.toLowerCase();
 
-    partsData.forEach((item, index) => {
-      if (item.quantity > 0 && (
+  let counter = 1;
+  partsData.forEach((item, index) => {
+    if (
+      item.quantity > 0 &&
+      (
         item.name.toLowerCase().includes(filter) ||
         item.catalog.toLowerCase().includes(filter) ||
         item.location.toLowerCase().includes(filter)
-      )) {
-        let counter = 1;
-partsData.forEach((item, index) => {
-  if (item.quantity > 0 && (
-    item.name.toLowerCase().includes(filter) ||
-    item.catalog.toLowerCase().includes(filter) ||
-    item.location.toLowerCase().includes(filter)
-  )) {
-    const row = tbody.insertRow();
-    row.insertCell(0).textContent = counter++;
-    ...
+      )
+    ) {
+      const row = tbody.insertRow();
+      row.insertCell(0).textContent = counter++; // новый номер по порядку
+      row.insertCell(1).textContent = item.name;
+      row.insertCell(2).textContent = item.catalog;
+      row.insertCell(3).textContent = item.quantity;
+      row.insertCell(4).textContent = item.location;
+      row.insertCell(5).textContent = item.arrival;
+      row.insertCell(6).textContent = item.installed || "";
+      row.insertCell(7).innerHTML = `
+        <span class="edit-btn" onclick="toggleForm(true, ${index})">✏</span> |
+        <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
+        <span class="history-btn" onclick="renderHistory('${item.catalog}')">📜 История</span> |
+        <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>`;
+    }
+  });
+}
 
-        row.insertCell(1).textContent = item.name;
-        row.insertCell(2).textContent = item.catalog;
-        row.insertCell(3).textContent = item.quantity;
-        row.insertCell(4).textContent = item.location;
-        row.insertCell(5).textContent = item.arrival;
-        row.insertCell(6).textContent = item.installed || "";
-        row.insertCell(7).innerHTML = `
-          <span class="edit-btn" onclick="toggleForm(true, ${index})">✏</span> |
-          <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
-          <span class="history-btn" onclick="renderHistory('${item.catalog}')">📜 История</span> |
-          <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>`;
-      }
-    });
-  }
 
   function renderHistory(filterCatalog = null) {
   const tbody = document.getElementById("historyBody");
