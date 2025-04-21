@@ -47,9 +47,7 @@
         <th>Место хранения</th>
       </tr>
     </thead>
-    <tbody>
-      <!-- строки добавляются сюда -->
-    </tbody>
+    <tbody></tbody>
   </table>
 
   <div id="formRow">
@@ -63,7 +61,19 @@
   <button onclick="toggleForm()">Добавить новую</button>
 
   <script>
-    let count = 0;
+    let partsData = [];
+
+    function saveToLocalStorage() {
+      localStorage.setItem("partsData", JSON.stringify(partsData));
+    }
+
+    function loadFromLocalStorage() {
+      const data = localStorage.getItem("partsData");
+      if (data) {
+        partsData = JSON.parse(data);
+        renderTable();
+      }
+    }
 
     function toggleForm() {
       const form = document.getElementById("formRow");
@@ -81,15 +91,9 @@
         return;
       }
 
-      const table = document.getElementById("partsTable").getElementsByTagName('tbody')[0];
-      const row = table.insertRow();
-      count++;
-
-      row.insertCell(0).textContent = count;
-      row.insertCell(1).textContent = name;
-      row.insertCell(2).textContent = catalog;
-      row.insertCell(3).textContent = quantity;
-      row.insertCell(4).textContent = location;
+      partsData.push({ name, catalog, quantity, location });
+      saveToLocalStorage();
+      renderTable();
 
       document.getElementById("name").value = "";
       document.getElementById("catalog").value = "";
@@ -97,7 +101,24 @@
       document.getElementById("location").value = "";
       document.getElementById("formRow").style.display = "none";
     }
+
+    function renderTable() {
+      const tbody = document.querySelector("#partsTable tbody");
+      tbody.innerHTML = "";
+
+      partsData.forEach((item, index) => {
+        const row = tbody.insertRow();
+        row.insertCell(0).textContent = index + 1;
+        row.insertCell(1).textContent = item.name;
+        row.insertCell(2).textContent = item.catalog;
+        row.insertCell(3).textContent = item.quantity;
+        row.insertCell(4).textContent = item.location;
+      });
+    }
+
+    window.onload = loadFromLocalStorage;
   </script>
 
 </body>
 </html>
+
