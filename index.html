@@ -28,6 +28,8 @@
       <th>Каталожный номер</th>
       <th>Количество</th>
       <th>Место хранения</th>
+      <th>Дата поступления</th>
+      <th>Дата установки</th>
       <th>Действия</th>
     </tr>
   </thead>
@@ -39,6 +41,7 @@
   <input type="text" id="catalog" placeholder="Каталожный номер">
   <input type="number" id="quantity" placeholder="Количество">
   <input type="text" id="location" placeholder="Место хранения">
+  <input type="date" id="installed" placeholder="Дата установки">
   <button onclick="saveEntry()">Сохранить</button>
 </div>
 
@@ -69,6 +72,7 @@
       document.getElementById("catalog").value = "";
       document.getElementById("quantity").value = "";
       document.getElementById("location").value = "";
+      document.getElementById("installed").value = "";
       editIndex = null;
     } else {
       const item = partsData[index];
@@ -76,6 +80,7 @@
       document.getElementById("catalog").value = item.catalog;
       document.getElementById("quantity").value = item.quantity;
       document.getElementById("location").value = item.location;
+      document.getElementById("installed").value = item.installed || "";
       editIndex = index;
     }
   }
@@ -85,13 +90,24 @@
     const catalog = document.getElementById("catalog").value.trim();
     const quantity = document.getElementById("quantity").value.trim();
     const location = document.getElementById("location").value.trim();
+    const installed = document.getElementById("installed").value;
 
     if (!name || !catalog || !quantity || !location) {
-      alert("Заполните все поля!");
+      alert("Заполните все поля кроме даты установки");
       return;
     }
 
-    const entry = { name, catalog, quantity, location };
+    const now = new Date();
+    const arrival = now.toISOString().split('T')[0];
+
+    const entry = {
+      name,
+      catalog,
+      quantity,
+      location,
+      installed,
+      arrival: editIndex !== null ? partsData[editIndex].arrival : arrival
+    };
 
     if (editIndex !== null) {
       partsData[editIndex] = entry;
@@ -131,8 +147,10 @@
         row.insertCell(2).textContent = item.catalog;
         row.insertCell(3).textContent = item.quantity;
         row.insertCell(4).textContent = item.location;
+        row.insertCell(5).textContent = item.arrival;
+        row.insertCell(6).textContent = item.installed || "";
 
-        const actionCell = row.insertCell(5);
+        const actionCell = row.insertCell(7);
         actionCell.innerHTML = `
           <span class="edit-btn" onclick="toggleForm(true, ${index})">✏ Редакт</span> |
           <span class="delete-btn" onclick="deleteRow(${index})">🗑 Удалить</span>
@@ -143,7 +161,7 @@
 
   function exportToExcel() {
     const ws_data = [
-      ["№", "Наименование", "Каталожный номер", "Количество", "Место хранения"]
+      ["№", "Наименование", "Каталожный номер", "Количество", "Место хранения", "Дата поступления", "Дата установки"]
     ];
     partsData.forEach((item, index) => {
       ws_data.push([
@@ -151,7 +169,9 @@
         item.name,
         item.catalog,
         item.quantity,
-        item.location
+        item.location,
+        item.arrival,
+        item.installed || ""
       ]);
     });
 
