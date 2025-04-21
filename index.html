@@ -181,6 +181,7 @@ setTimeout(() => {
 }, 0);
 
 window.onload = () => {
+  toggleForm(false); // скрыть форму при старте
   partsData = JSON.parse(localStorage.getItem("partsData") || "[]");
   techGroups = JSON.parse(localStorage.getItem("techGroups") || "{}");
   historyLog = JSON.parse(localStorage.getItem("historyLog") || "[]");
@@ -189,6 +190,7 @@ window.onload = () => {
   renderHistory();
   renderArrivalHistory();
 };
+
 function renderTable() {
   const tbody = document.querySelector("#partsTable tbody");
   tbody.innerHTML = "";
@@ -467,16 +469,6 @@ function addTech() {
 </script>
 </body>
 </html>
-window.onload = () => {
-  toggleForm(false); // Скрываем форму при загрузке
-  partsData = JSON.parse(localStorage.getItem("partsData") || "[]");
-  techGroups = JSON.parse(localStorage.getItem("techGroups") || "{}");
-  historyLog = JSON.parse(localStorage.getItem("historyLog") || "[]");
-  arrivalLog = JSON.parse(localStorage.getItem("arrivalLog") || "[]");
-  renderTable();
-  renderHistory();
-  renderArrivalHistory();
-};
 
 
 
