@@ -313,15 +313,18 @@
   const tbody = document.getElementById("historyBody");
   tbody.innerHTML = "";
 
-  const inputFilter = document.getElementById("historySearchInput")?.value.toLowerCase() || "";
+  const input = document.getElementById("historySearchInput");
+  const inputFilter = input?.value.toLowerCase() || "";
   const catalogFilter = filterCatalog?.toLowerCase() || "";
 
   historyLog.forEach(entry => {
     const entryCatalog = entry.catalog.toLowerCase();
-    if (
-      (!catalogFilter || entryCatalog === catalogFilter) &&
-      (!inputFilter || entryCatalog.includes(inputFilter))
-    ) {
+    const entryName = entry.name.toLowerCase();
+
+    const matchesCatalog = !catalogFilter || entryCatalog === catalogFilter;
+    const matchesInput = !inputFilter || entryCatalog.includes(inputFilter) || entryName.includes(inputFilter);
+
+    if (matchesCatalog && matchesInput) {
       const row = tbody.insertRow();
       row.insertCell(0).textContent = entry.catalog;
       row.insertCell(1).textContent = entry.name;
@@ -331,6 +334,7 @@
     }
   });
 }
+
 
 
   function exportToExcel() {
