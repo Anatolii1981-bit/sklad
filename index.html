@@ -11,7 +11,7 @@
     th { background-color: #f0f0f0; }
     input, select, button { padding: 6px; margin: 5px 5px 5px 0; }
     #formRow { display: none; margin-bottom: 10px; }
-    .edit-btn, .delete-btn { cursor: pointer; color: blue; }
+    .edit-btn, .delete-btn, .install-btn { cursor: pointer; color: blue; }
   </style>
 </head>
 <body>
@@ -151,6 +151,31 @@
     }
   }
 
+  function installToday(index) {
+    const item = partsData[index];
+    const maxQty = parseInt(item.quantity);
+    const inputQty = prompt(`Сколько установить? В наличии: ${maxQty}`, "1");
+
+    if (inputQty === null) return; // отмена
+
+    const installQty = parseInt(inputQty);
+    if (isNaN(installQty) || installQty <= 0) {
+      alert("Введите корректное количество");
+      return;
+    }
+
+    if (installQty > maxQty) {
+      alert("Нельзя установить больше, чем есть на складе");
+      return;
+    }
+
+    partsData[index].quantity = maxQty - installQty;
+    partsData[index].installed = new Date().toISOString().split("T")[0];
+
+    saveToLocalStorage();
+    renderTable();
+  }
+
   function renderTable() {
     const tbody = document.querySelector("#partsTable tbody");
     tbody.innerHTML = "";
@@ -178,6 +203,7 @@
         const actionCell = row.insertCell(8);
         actionCell.innerHTML = `
           <span class="edit-btn" onclick="toggleForm(true, ${index})">✏ Редакт</span> |
+          <span class="install-btn" onclick="installToday(${index})">🛠 Установить сегодня</span> |
           <span class="delete-btn" onclick="deleteRow(${index})">🗑 Удалить</span>
         `;
       }
