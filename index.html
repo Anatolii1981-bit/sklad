@@ -45,7 +45,7 @@
 <button onclick="saveToJSON()">💾 Сохранить в JSON</button>
 <input type="file" id="jsonFileInput" style="display:none" onchange="loadFromJSON(event)">
 <button onclick="document.getElementById('jsonFileInput').click()">📂 Загрузить из JSON</button>
-<button onclick="renderHistory()">📜 Общая история</button>
+<button onclick="toggleHistory()">📜 Общая история</button>
 <button onclick="exportHistoryToExcel()">📤 Экспорт истории</button>
 
 <table id="partsTable">
@@ -431,6 +431,14 @@
     saveToLocalStorage();
     renderTechList();
   }
+  let historyVisible = true;
+
+function toggleHistory() {
+  historyVisible = !historyVisible;
+  document.getElementById("historyTable").style.display = historyVisible ? "table" : "none";
+  renderHistory();
+}
+
 
   window.onload = () => {
     partsData = JSON.parse(localStorage.getItem("partsData") || "[]");
