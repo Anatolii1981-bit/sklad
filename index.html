@@ -127,6 +127,7 @@
 
 <!-- История поступлений -->
 <h3>История поступлений</h3>
+  <input type="text" id="arrivalSearchInput" placeholder="Поиск по каталожному номеру" oninput="renderArrivalHistory()">
 <table id="arrivalHistoryTable" style="display:none;">
   <thead>
     <tr>
@@ -329,13 +330,19 @@ function renderHistory(filterCatalog = null) {
 function renderArrivalHistory() {
   const tbody = document.getElementById("arrivalBody");
   tbody.innerHTML = "";
+
+  const inputFilter = document.getElementById("arrivalSearchInput")?.value.toLowerCase() || "";
+
   arrivalLog.forEach(entry => {
-    const row = tbody.insertRow();
-    row.insertCell(0).textContent = entry.catalog;
-    row.insertCell(1).textContent = entry.name;
-    row.insertCell(2).textContent = entry.qty;
-    row.insertCell(3).textContent = entry.date;
-    row.insertCell(4).textContent = entry.location;
+    const entryCatalog = entry.catalog.toLowerCase();
+    if (!inputFilter || entryCatalog.includes(inputFilter)) {
+      const row = tbody.insertRow();
+      row.insertCell(0).textContent = entry.catalog;
+      row.insertCell(1).textContent = entry.name;
+      row.insertCell(2).textContent = entry.qty;
+      row.insertCell(3).textContent = entry.date;
+      row.insertCell(4).textContent = entry.location;
+    }
   });
 }
 function exportToExcel() {
