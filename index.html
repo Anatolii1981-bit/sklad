@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Склад запчастей</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    input {
+      margin-right: 10px;
+    }
+    #formRow {
+      display: none;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 8px 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Склад хранения запчастей</h2>
+
+  <table id="partsTable">
+    <thead>
+      <tr>
+        <th>Ном по порядку</th>
+        <th>Наименование</th>
+        <th>Каталожный номер</th>
+        <th>Количество</th>
+        <th>Место хранения</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- строки добавляются сюда -->
+    </tbody>
+  </table>
+
+  <div id="formRow">
+    <input type="text" id="name" placeholder="Наименование">
+    <input type="text" id="catalog" placeholder="Каталожный номер">
+    <input type="number" id="quantity" placeholder="Количество">
+    <input type="text" id="location" placeholder="Место хранения">
+    <button onclick="addRow()">Сохранить</button>
+  </div>
+
+  <button onclick="toggleForm()">Добавить новую</button>
+
+  <script>
+    let count = 0;
+
+    function toggleForm() {
+      const form = document.getElementById("formRow");
+      form.style.display = (form.style.display === "none") ? "block" : "none";
+    }
+
+    function addRow() {
+      const name = document.getElementById("name").value.trim();
+      const catalog = document.getElementById("catalog").value.trim();
+      const quantity = document.getElementById("quantity").value.trim();
+      const location = document.getElementById("location").value.trim();
+
+      if (!name || !catalog || !quantity || !location) {
+        alert("Заполните все поля!");
+        return;
+      }
+
+      const table = document.getElementById("partsTable").getElementsByTagName('tbody')[0];
+      const row = table.insertRow();
+      count++;
+
+      row.insertCell(0).textContent = count;
+      row.insertCell(1).textContent = name;
+      row.insertCell(2).textContent = catalog;
+      row.insertCell(3).textContent = quantity;
+      row.insertCell(4).textContent = location;
+
+      document.getElementById("name").value = "";
+      document.getElementById("catalog").value = "";
+      document.getElementById("quantity").value = "";
+      document.getElementById("location").value = "";
+      document.getElementById("formRow").style.display = "none";
+    }
+  </script>
+
+</body>
+</html>
