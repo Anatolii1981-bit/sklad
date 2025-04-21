@@ -3,332 +3,126 @@
 <head>
   <meta charset="UTF-8">
   <title>Склад запчастей</title>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background-color: #f0f0f0; }
-    input, button, select { padding: 6px; margin: 5px 5px 5px 0; }
-    .edit-btn, .delete-btn, .install-btn, .history-btn { cursor: pointer; color: blue; }
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">// === ДОБАВКА ОСНОВНЫХ ФУНКЦИЙ ===
 
-    .modal {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); justify-content: center; align-items: center;
-    }
-
-    .modal-content {
-      background: white; padding: 20px; border-radius: 5px; min-width: 300px;
-    }
-
-    #installRow {
-      display: none;
-      padding: 10px;
-      border: 1px solid #ccc;
-      margin-bottom: 20px;
-      background: #f9f9f9;
-    }
-
-    #historyTable {
-      margin-top: 30px;
-    }
-  </style>
-</head>
-<body>
-<h2>Склад хранения запчастей</h2>
-
-<input type="text" id="searchInput" placeholder="Поиск...">
-<button onclick="toggleForm()">Добавить новую</button>
-<button onclick="exportToExcel()">Экспорт склада</button>
-<button onclick="exportTechPark()">Экспорт техники</button>
-<button onclick="openTechManager()">Управление техникой</button>
-<button onclick="saveToJSON()">💾 Сохранить в JSON</button>
-<input type="file" id="jsonFileInput" style="display:none" onchange="loadFromJSON(event)">
-<button onclick="document.getElementById('jsonFileInput').click()">📂 Загрузить из JSON</button>
-<button onclick="toggleHistory()">📜 Общая история</button>
-<button onclick="exportHistoryToExcel()">📤 Экспорт истории</button>
-
-<table id="partsTable">
-  <thead>
-   <tr>
-  <th>№</th>
-  <th>Каталожный номер</th>
-  <th>Наименование</th>
-      <th>Количество</th>
-      <th>Место хранения</th>
-      <th>Дата поступления</th>
-      <th>Дата установки</th>
-      <th>Действия</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-<!-- Форма добавления -->
-<div id="formRow" style="display:none;">
-  <input id="name" placeholder="Наименование">
-  <input id="catalog" placeholder="Каталожный номер">
-  <input type="number" id="quantity" placeholder="Количество">
-  <input id="location" placeholder="Место хранения">
-  <input type="date" id="installed" placeholder="Дата установки">
-  <button onclick="saveEntry()">Сохранить</button>
-</div>
-
-<!-- Форма установки -->
-<div id="installRow">
-  <strong>Установка запчасти:</strong><br>
-  <label>Количество:</label>
-  <input type="number" id="installQty" placeholder="Сколько установить?">
-  <label>Группа техники:</label>
-  <select id="installGroup" onchange="updateTechOptions()">
-    <option value="">-- выберите группу --</option>
-    <option value="Трактор">Трактор</option>
-    <option value="Комбайн">Комбайн</option>
-    <option value="Опрыскиватель">Опрыскиватель</option>
-    <option value="Сеялка">Сеялка</option>
-    <option value="Другое">Другое</option>
-  </select>
-  <label>Техника:</label>
-  <select id="installTech">
-    <option value="">-- выберите технику --</option>
-  </select>
-  <button onclick="confirmInstall()">Подтвердить установку</button>
-  <button onclick="cancelInstall()">Отмена</button>
-</div>
-
-<!-- Управление техникой -->
-<div class="modal" id="techModal">
-  <div class="modal-content">
-    <h3>Управление техникой</h3>
-    <label>Группа:</label>
-    <select id="groupSelect" onchange="renderTechList()">
-      <option value="Трактор">Трактор</option>
-      <option value="Комбайн">Комбайн</option>
-      <option value="Опрыскиватель">Опрыскиватель</option>
-      <option value="Сеялка">Сеялка</option>
-      <option value="Другое">Другое</option>
-    </select>
-    <ul id="techList"></ul>
-    <input id="newTech" placeholder="Новая техника">
-    <button onclick="addTech()">Добавить</button>
-    <button onclick="closeTechManager()">Закрыть</button>
-  </div>
-</div>
-
-<h3>История установок</h3>
-<input type="text" id="historySearchInput" placeholder="Поиск по каталожному номеру" oninput="renderHistory()">
-
-<table id="historyTable" style="display:none;">
-
-  <thead>
-    <tr>
-      <th>Каталожный номер</th>
-      <th>Наименование</th>
-      <th>Количество</th>
-      <th>Дата установки</th>
-      <th>Техника</th>
-    </tr>
-  </thead>
-  <tbody id="historyBody"></tbody>
-</table>
-<script>
-  let partsData = [];
-  let techGroups = JSON.parse(localStorage.getItem("techGroups") || '{}');
-  let historyLog = JSON.parse(localStorage.getItem("historyLog") || '[]');
-  let editIndex = null;
-  let currentInstallIndex = null;
-
-  function saveToLocalStorage() {
-    localStorage.setItem("partsData", JSON.stringify(partsData));
-    localStorage.setItem("techGroups", JSON.stringify(techGroups));
-    localStorage.setItem("historyLog", JSON.stringify(historyLog));
-  }
-
-  function toggleForm(edit = false, index = null) {
-    const form = document.getElementById("formRow");
-    form.style.display = form.style.display === "none" ? "block" : "none";
-
-    if (!edit) {
-      document.getElementById("name").value = "";
-      document.getElementById("catalog").value = "";
-      document.getElementById("quantity").value = "";
-      document.getElementById("location").value = "";
-      document.getElementById("installed").value = "";
-      editIndex = null;
-    } else {
-      const item = partsData[index];
-      document.getElementById("name").value = item.name;
-      document.getElementById("catalog").value = item.catalog;
-      document.getElementById("quantity").value = item.quantity;
-      document.getElementById("location").value = item.location;
-      document.getElementById("installed").value = item.installed || "";
-      editIndex = index;
-    }
-  }
-
-  function saveEntry() {
-    const name = document.getElementById("name").value.trim();
-    const catalog = document.getElementById("catalog").value.trim();
-    const quantity = parseInt(document.getElementById("quantity").value.trim());
-    const location = document.getElementById("location").value.trim();
-    const installed = document.getElementById("installed").value;
-
-    if (!name || !catalog || isNaN(quantity) || !location) {
-      alert("Заполните все поля");
-      return;
-    }
-
-    const now = new Date();
-    const arrival = now.toLocaleDateString("ru-RU");
-
-    const entry = {
-      name,
-      catalog,
-      quantity,
-      location,
-      installed,
-      arrival
-    };
-
-   if (editIndex !== null) {
-  partsData[editIndex] = entry;
-  editIndex = null;
-} else {
-  const existing = partsData.find(p => p.catalog.toLowerCase() === catalog.toLowerCase());
-  if (existing) {
-    existing.quantity += quantity;
-    existing.arrival = new Date().toLocaleDateString("ru-RU");
-  } else {
-    partsData.push(entry);
-  }
-}
-
-
-    saveToLocalStorage();
-    renderTable();
-    toggleForm(false);
-  }
-
-  function startInstall(index) {
-    currentInstallIndex = index;
-    document.getElementById("installQty").value = "";
-    document.getElementById("installGroup").value = "";
-    document.getElementById("installTech").innerHTML = '<option value="">-- выберите технику --</option>';
-    document.getElementById("installRow").style.display = "block";
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-  }
-
-  function cancelInstall() {
-    currentInstallIndex = null;
-    document.getElementById("installRow").style.display = "none";
-  }
-
-  function updateTechOptions() {
-    const group = document.getElementById("installGroup").value;
-    const techSelect = document.getElementById("installTech");
-    techSelect.innerHTML = "";
-    if (group && techGroups[group]) {
-      techGroups[group].forEach(tech => {
-        const option = document.createElement("option");
-        option.value = tech;
-        option.textContent = tech;
-        techSelect.appendChild(option);
-      });
-    } else {
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = "-- выберите технику --";
-      techSelect.appendChild(opt);
-    }
-  }
-
-  function confirmInstall() {
-    const qty = parseInt(document.getElementById("installQty").value);
-    const group = document.getElementById("installGroup").value;
-    const tech = document.getElementById("installTech").value;
-
-    if (currentInstallIndex === null || isNaN(qty) || qty <= 0 || !group || !tech) {
-      alert("Заполните все поля установки");
-      return;
-    }
-
-    const part = partsData[currentInstallIndex];
-    if (qty > parseInt(part.quantity)) {
-      alert("Нельзя установить больше, чем на складе");
-      return;
-    }
-
-    part.quantity -= qty;
-    part.installed = new Date().toISOString().split("T")[0];
-
-    historyLog.push({
-      catalog: part.catalog,
-      name: part.name,
-      qty,
-      date: part.installed,
-      tech: `${group} — ${tech}`
-    });
-
-    saveToLocalStorage();
-    renderTable();
-    renderHistory();
-    cancelInstall();
-  }
-
-  function deleteRow(index) {
-    if (confirm("Удалить эту строку?")) {
-      partsData.splice(index, 1);
-      saveToLocalStorage();
-      renderTable();
-    }
-  }
-
-  function renderTable() {
+function renderTable() {
   const tbody = document.querySelector("#partsTable tbody");
   tbody.innerHTML = "";
   const filter = document.getElementById("searchInput").value.toLowerCase();
-
   let counter = 1;
   partsData.forEach((item, index) => {
     if (
       item.quantity > 0 &&
-      (
-        item.name.toLowerCase().includes(filter) ||
-        item.catalog.toLowerCase().includes(filter) ||
-        item.location.toLowerCase().includes(filter)
-      )
+      (item.name.toLowerCase().includes(filter) ||
+       item.catalog.toLowerCase().includes(filter) ||
+       item.location.toLowerCase().includes(filter))
     ) {
       const row = tbody.insertRow();
-      row.insertCell(0).textContent = counter++; // новый номер по порядку
-     row.insertCell(1).textContent = item.catalog;
-row.insertCell(2).textContent = item.name;
+      row.insertCell(0).textContent = counter++;
+      row.insertCell(1).textContent = item.catalog;
+      row.insertCell(2).textContent = item.name;
       row.insertCell(3).textContent = item.quantity;
       row.insertCell(4).textContent = item.location;
       row.insertCell(5).textContent = item.arrival;
       row.insertCell(6).textContent = item.installed || "";
       row.insertCell(7).innerHTML = `
-  <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
-  <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>`;
+        <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
+        <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>`;
     }
   });
 }
 
+function saveEntry() {
+  const name = document.getElementById("name").value.trim();
+  const catalog = document.getElementById("catalog").value.trim();
+  const quantity = parseInt(document.getElementById("quantity").value.trim());
+  const location = document.getElementById("location").value.trim();
+  const installed = document.getElementById("installed").value;
+  if (!name || !catalog || isNaN(quantity) || !location) {
+    alert("Заполните все поля");
+    return;
+  }
+  const now = new Date();
+  const arrival = now.toLocaleDateString("ru-RU");
+  const entry = { name, catalog, quantity, location, installed, arrival };
+  if (editIndex !== null) {
+    partsData[editIndex] = entry;
+    editIndex = null;
+  } else {
+    const existing = partsData.find(p => p.catalog.toLowerCase() === catalog.toLowerCase());
+    if (existing) {
+      existing.quantity += quantity;
+      existing.arrival = arrival;
+    } else {
+      partsData.push(entry);
+    }
+    arrivalLog.push({ catalog, name, qty: quantity, date: arrival, location });
+  }
+  saveToLocalStorage();
+  renderTable();
+  toggleForm(false);
+}
 
-  function renderHistory(filterCatalog = null) {
+function confirmInstall() {
+  const qty = parseInt(document.getElementById("installQty").value);
+  const group = document.getElementById("installGroup").value;
+  const tech = document.getElementById("installTech").value;
+  if (currentInstallIndex === null || isNaN(qty) || qty <= 0 || !group || !tech) {
+    alert("Заполните все поля установки");
+    return;
+  }
+  const part = partsData[currentInstallIndex];
+  if (qty > part.quantity) {
+    alert("Нельзя установить больше, чем на складе");
+    return;
+  }
+  part.quantity -= qty;
+  part.installed = new Date().toISOString().split("T")[0];
+  historyLog.push({
+    catalog: part.catalog,
+    name: part.name,
+    qty,
+    date: part.installed,
+    tech: `${group} — ${tech}`
+  });
+  saveToLocalStorage();
+  renderTable();
+  renderHistory();
+  cancelInstall();
+}
+
+function cancelInstall() {
+  currentInstallIndex = null;
+  document.getElementById("installRow").style.display = "none";
+}
+
+function startInstall(index) {
+  currentInstallIndex = index;
+  document.getElementById("installQty").value = "";
+  document.getElementById("installGroup").value = "";
+  document.getElementById("installTech").innerHTML = '<option value="">-- выберите технику --</option>';
+  document.getElementById("installRow").style.display = "block";
+  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+function deleteRow(index) {
+  if (confirm("Удалить эту строку?")) {
+    partsData.splice(index, 1);
+    saveToLocalStorage();
+    renderTable();
+  }
+}
+
+function renderHistory(filterCatalog = null) {
   const tbody = document.getElementById("historyBody");
   tbody.innerHTML = "";
-
-  const input = document.getElementById("historySearchInput");
-  const inputFilter = input?.value.toLowerCase() || "";
+  const inputFilter = document.getElementById("historySearchInput")?.value.toLowerCase() || "";
   const catalogFilter = filterCatalog?.toLowerCase() || "";
-
   historyLog.forEach(entry => {
     const entryCatalog = entry.catalog.toLowerCase();
     const entryName = entry.name.toLowerCase();
-
     const matchesCatalog = !catalogFilter || entryCatalog === catalogFilter;
     const matchesInput = !inputFilter || entryCatalog.includes(inputFilter) || entryName.includes(inputFilter);
-
     if (matchesCatalog && matchesInput) {
       const row = tbody.insertRow();
       row.insertCell(0).textContent = entry.catalog;
@@ -340,150 +134,208 @@ row.insertCell(2).textContent = item.name;
   });
 }
 
-
-
-  function exportToExcel() {
-    const ws_data = [["№", "Наименование", "Каталожный номер", "Количество", "Место хранения", "Дата поступления", "Дата установки"]];
-    partsData.forEach((item, index) => {
-      if (item.quantity > 0) {
-        ws_data.push([
-          index + 1,
-          item.name,
-          item.catalog,
-          item.quantity,
-          item.location,
-          item.arrival,
-          item.installed || ""
-        ]);
-      }
-    });
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(ws_data);
-    XLSX.utils.book_append_sheet(wb, ws, "Склад");
-    XLSX.writeFile(wb, "sklad.xlsx");
-  }
-
-  function exportTechPark() {
-    const data = [["Группа", "Техника"]];
-    for (let group in techGroups) {
-      techGroups[group].forEach(tech => data.push([group, tech]));
+function renderArrivalHistory() {
+  const tbody = document.getElementById("arrivalBody");
+  tbody.innerHTML = "";
+  arrivalLog.forEach(entry => {
+    const row = tbody.insertRow();
+    row.insertCell(0).textContent = entry.catalog;
+    row.insertCell(1).textContent = entry.name;
+    row.insertCell(2).textContent = entry.qty;
+    row.insertCell(3).textContent = entry.date;
+    row.insertCell(4).textContent = entry.location;
+  });
+}
+</script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f0f0f0; }
+    input, button, select { padding: 6px; margin: 5px 5px 5px 0; }
+    .edit-btn, .delete-btn, .install-btn, .history-btn { cursor: pointer; color: blue; }
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); justify-content: center; align-items: center;
     }
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, "Техника");
-    XLSX.writeFile(wb, "techpark.xlsx");
-  }
+    .modal-content {
+      background: white; padding: 20px; border-radius: 5px; min-width: 300px;
+    }
+    #installRow {
+      display: none;
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+      background: #f9f9f9;
+    }
+    #historyTable, #arrivalHistoryTable {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Склад хранения запчастей</h2>
 
-  function exportHistoryToExcel() {
-    const data = [["Каталожный номер", "Наименование", "Количество", "Дата установки", "Техника"]];
-    historyLog.forEach(h => {
-      data.push([h.catalog, h.name, h.qty, h.date, h.tech]);
-    });
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    XLSX.utils.book_append_sheet(wb, ws, "История");
-    XLSX.writeFile(wb, "history.xlsx");
-  }
+  <input type="text" id="searchInput" placeholder="Поиск...">
+  <button onclick="toggleForm()">Добавить новую</button>
+  <button onclick="exportToExcel()">Экспорт склада</button>
+  <button onclick="exportTechPark()">Экспорт техники</button>
+  <button onclick="openTechManager()">Управление техникой</button>
+  <button onclick="saveToJSON()">💾 Сохранить в JSON</button>
+  <input type="file" id="jsonFileInput" style="display:none" onchange="loadFromJSON(event)">
+  <button onclick="document.getElementById('jsonFileInput').click()">📂 Загрузить из JSON</button>
+  <button onclick="toggleHistory()">📜 Общая история</button>
+  <button onclick="exportHistoryToExcel()">📤 Экспорт истории</button>
+  <button onclick="toggleArrivalHistory()">📥 История поступлений</button>
 
-  function saveToJSON() {
-    const backup = { partsData, techGroups, historyLog };
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'sklad_backup.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+  <table id="partsTable">
+    <thead>
+      <tr>
+        <th>№</th>
+        <th>Каталожный номер</th>
+        <th>Наименование</th>
+        <th>Количество</th>
+        <th>Место хранения</th>
+        <th>Дата поступления</th>
+        <th>Дата установки</th>
+        <th>Действия</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-  function loadFromJSON(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const json = JSON.parse(e.target.result);
-        partsData = json.partsData || [];
-        techGroups = json.techGroups || {};
-        historyLog = json.historyLog || [];
-        saveToLocalStorage();
-        renderTable();
-        renderHistory();
-        alert("Данные успешно загружены из JSON!");
-      } catch (err) {
-        alert("Ошибка загрузки: " + err.message);
-      }
-    };
-    reader.readAsText(file);
-  }
+  <div id="formRow" style="display:none;">
+    <input id="name" placeholder="Наименование">
+    <input id="catalog" placeholder="Каталожный номер">
+    <input type="number" id="quantity" placeholder="Количество">
+    <input id="location" placeholder="Место хранения">
+    <input type="date" id="installed" placeholder="Дата установки">
+    <button onclick="saveEntry()">Сохранить</button>
+  </div>
 
-  function openTechManager() {
-    document.getElementById("techModal").style.display = "flex";
-    renderTechList();
-  }
+  <div id="installRow">
+    <strong>Установка запчасти:</strong><br>
+    <label>Количество:</label>
+    <input type="number" id="installQty" placeholder="Сколько установить?">
+    <label>Группа техники:</label>
+    <select id="installGroup" onchange="updateTechOptions()">
+      <option value="">-- выберите группу --</option>
+      <option value="Трактор">Трактор</option>
+      <option value="Комбайн">Комбайн</option>
+      <option value="Опрыскиватель">Опрыскиватель</option>
+      <option value="Сеялка">Сеялка</option>
+      <option value="Другое">Другое</option>
+    </select>
+    <label>Техника:</label>
+    <select id="installTech">
+      <option value="">-- выберите технику --</option>
+    </select>
+    <button onclick="confirmInstall()">Подтвердить установку</button>
+    <button onclick="cancelInstall()">Отмена</button>
+  </div>
 
-  function closeTechManager() {
-    document.getElementById("techModal").style.display = "none";
-  }
+  <div class="modal" id="techModal">
+    <div class="modal-content">
+      <h3>Управление техникой</h3>
+      <label>Группа:</label>
+      <select id="groupSelect" onchange="renderTechList()">
+        <option value="Трактор">Трактор</option>
+        <option value="Комбайн">Комбайн</option>
+        <option value="Опрыскиватель">Опрыскиватель</option>
+        <option value="Сеялка">Сеялка</option>
+        <option value="Другое">Другое</option>
+      </select>
+      <ul id="techList"></ul>
+      <input id="newTech" placeholder="Новая техника">
+      <button onclick="addTech()">Добавить</button>
+      <button onclick="closeTechManager()">Закрыть</button>
+    </div>
+  </div>
 
-  function renderTechList() {
-    const group = document.getElementById("groupSelect").value;
-    const list = techGroups[group] || [];
-    const ul = document.getElementById("techList");
-    ul.innerHTML = "";
-    list.forEach((tech, i) => {
-      const li = document.createElement("li");
-      li.textContent = tech + " ";
-      const del = document.createElement("button");
-      del.textContent = "Удалить";
-      del.onclick = () => {
-        techGroups[group].splice(i, 1);
-        saveToLocalStorage();
-        renderTechList();
-      };
-      li.appendChild(del);
-      ul.appendChild(li);
-    });
-  }
+  <h3>История установок</h3>
+  <input type="text" id="historySearchInput" placeholder="Поиск по каталожному номеру или наименованию" oninput="renderHistory()">
+  <table id="historyTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>Каталожный номер</th>
+        <th>Наименование</th>
+        <th>Количество</th>
+        <th>Дата установки</th>
+        <th>Техника</th>
+      </tr>
+    </thead>
+    <tbody id="historyBody"></tbody>
+  </table>
 
-  function addTech() {
-    const group = document.getElementById("groupSelect").value;
-    const newTech = document.getElementById("newTech").value.trim();
-    if (!newTech) return;
-    techGroups[group] = techGroups[group] || [];
-    techGroups[group].push(newTech);
-    document.getElementById("newTech").value = "";
-    saveToLocalStorage();
-    renderTechList();
-  }
- let historyVisible = false;
+  <h3>История поступлений</h3>
+  <table id="arrivalHistoryTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>Каталожный номер</th>
+        <th>Наименование</th>
+        <th>Количество</th>
+        <th>Дата поступления</th>
+        <th>Место хранения</th>
+      </tr>
+    </thead>
+    <tbody id="arrivalBody"></tbody>
+  </table>
+<script>
+// Переменные и начальные данные
+let partsData = [];
+let techGroups = JSON.parse(localStorage.getItem("techGroups") || '{}');
+let historyLog = JSON.parse(localStorage.getItem("historyLog") || '[]');
+let arrivalLog = JSON.parse(localStorage.getItem("arrivalLog") || '[]');
 
+let editIndex = null;
+let currentInstallIndex = null;
+let historyVisible = false;
+let arrivalVisible = false;
 
+// Сохраняем все данные в localStorage
+function saveToLocalStorage() {
+  localStorage.setItem("partsData", JSON.stringify(partsData));
+  localStorage.setItem("techGroups", JSON.stringify(techGroups));
+  localStorage.setItem("historyLog", JSON.stringify(historyLog));
+  localStorage.setItem("arrivalLog", JSON.stringify(arrivalLog));
+}
+
+// Показ/скрытие истории установок
 function toggleHistory() {
   historyVisible = !historyVisible;
   document.getElementById("historyTable").style.display = historyVisible ? "table" : "none";
   renderHistory();
 }
 
-document.getElementById("catalog").addEventListener("input", () => {
-  const cat = document.getElementById("catalog").value.trim().toLowerCase();
-  const existing = partsData.find(p => p.catalog.toLowerCase() === cat);
-  if (existing) {
-    document.getElementById("name").value = existing.name;
-    document.getElementById("location").value = existing.location;
-  }
-});
+// Показ/скрытие истории поступлений
+function toggleArrivalHistory() {
+  arrivalVisible = !arrivalVisible;
+  document.getElementById("arrivalHistoryTable").style.display = arrivalVisible ? "table" : "none";
+  renderArrivalHistory();
+}
 
+// Автозаполнение имени и местоположения при вводе каталожного номера
+setTimeout(() => {
+  document.getElementById("catalog").addEventListener("input", () => {
+    const cat = document.getElementById("catalog").value.trim().toLowerCase();
+    const existing = partsData.find(p => p.catalog.toLowerCase() === cat);
+    if (existing) {
+      document.getElementById("name").value = existing.name;
+      document.getElementById("location").value = existing.location;
+    }
+  });
+}, 0);
 
-  window.onload = () => {
-    partsData = JSON.parse(localStorage.getItem("partsData") || "[]");
-    techGroups = JSON.parse(localStorage.getItem("techGroups") || "{}");
-    historyLog = JSON.parse(localStorage.getItem("historyLog") || "[]");
-    renderTable();
-    renderHistory();
-  };
-
-  document.getElementById("searchInput").addEventListener("input", renderTable);
+// Загрузка данных при старте
+window.onload = () => {
+  partsData = JSON.parse(localStorage.getItem("partsData") || "[]");
+  techGroups = JSON.parse(localStorage.getItem("techGroups") || "{}");
+  historyLog = JSON.parse(localStorage.getItem("historyLog") || "[]");
+  arrivalLog = JSON.parse(localStorage.getItem("arrivalLog") || "[]");
+  renderTable();
+  renderHistory();
+  renderArrivalHistory();
+};
 </script>
 </body>
 </html>
