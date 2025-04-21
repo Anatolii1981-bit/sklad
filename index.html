@@ -190,12 +190,19 @@
       arrival
     };
 
-    if (editIndex !== null) {
-      partsData[editIndex] = entry;
-      editIndex = null;
-    } else {
-      partsData.push(entry);
-    }
+   if (editIndex !== null) {
+  partsData[editIndex] = entry;
+  editIndex = null;
+} else {
+  const existing = partsData.find(p => p.catalog.toLowerCase() === catalog.toLowerCase());
+  if (existing) {
+    existing.quantity += quantity;
+    existing.arrival = new Date().toLocaleDateString("ru-RU");
+  } else {
+    partsData.push(entry);
+  }
+}
+
 
     saveToLocalStorage();
     renderTable();
@@ -459,6 +466,13 @@ function toggleHistory() {
   renderHistory();
 }
 
+document.getElementById("catalog").addEventListener("input", () => {
+  const cat = document.getElementById("catalog").value.trim().toLowerCase();
+  const existing = partsData.find(p => p.catalog.toLowerCase() === cat);
+  if (existing) {
+    document.getElementById("name").value = existing.name;
+  }
+});
 
   window.onload = () => {
     partsData = JSON.parse(localStorage.getItem("partsData") || "[]");
