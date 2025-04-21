@@ -98,7 +98,7 @@
     }
 
     const now = new Date();
-    const arrival = now.toISOString().split('T')[0];
+    const arrival = now.toLocaleDateString("ru-RU");
 
     const entry = {
       name,
@@ -187,3 +187,4 @@
 
 </body>
 </html>
+
