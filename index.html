@@ -283,7 +283,15 @@ function saveEntry() {
 
   saveToLocalStorage();
   renderTable();
-  toggleForm(false);
+  // очищаем поля
+document.getElementById("name").value = "";
+document.getElementById("catalog").value = "";
+document.getElementById("quantity").value = "";
+document.getElementById("location").value = "";
+document.getElementById("supplier").value = "";
+document.getElementById("installed").value = "";
+document.getElementById("catalog").focus();
+
 }
 
   function saveAndContinue() {
@@ -552,6 +560,7 @@ function addTech() {
     form.style.display = (form.style.display === "none") ? "block" : "none";
   }
 }
+
 function updateTechOptions() {
   const group = document.getElementById("installGroup").value;
   const select = document.getElementById("installTech");
