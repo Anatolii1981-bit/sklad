@@ -128,6 +128,15 @@
 <!-- История поступлений -->
 <h3>История поступлений</h3>
   <input type="text" id="arrivalSearchInput" placeholder="Поиск по каталожному номеру" oninput="renderArrivalHistory()">
+
+<div style="margin: 10px 0;">
+  <label>С:</label>
+  <input type="date" id="arrivalFrom">
+  <label>По:</label>
+  <input type="date" id="arrivalTo">
+  <button onclick="exportFilteredArrivals()">📤 Экспорт поступлений по дате</button>
+</div>
+  <input type="text" id="arrivalSearchInput" placeholder="Поиск по каталожному номеру" oninput="renderArrivalHistory()">
 <table id="arrivalHistoryTable" style="display:none;">
   <thead>
     <tr>
@@ -485,6 +494,30 @@ function updateTechOptions() {
       select.appendChild(option);
     });
   }
+}
+function exportFilteredArrivals() {
+  const from = document.getElementById("arrivalFrom").value;
+  const to = document.getElementById("arrivalTo").value;
+
+  const data = [["Каталожный номер", "Наименование", "Количество", "Дата поступления", "Место хранения"]];
+
+  arrivalLog.forEach(entry => {
+    const date = entry.date.split('.').reverse().join('-'); // Преобразуем в ISO для сравнения
+
+    if ((!from || date >= from) && (!to || date <= to)) {
+      data.push([entry.catalog, entry.name, entry.qty, entry.date, entry.location]);
+    }
+  });
+
+  if (data.length === 1) {
+    alert("Нет записей за указанный период.");
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, "Поступления");
+  XLSX.writeFile(wb, "arrival_filtered.xlsx");
 }
 
 </script>
