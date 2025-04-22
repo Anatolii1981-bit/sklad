@@ -54,7 +54,7 @@
       <th>Дата поступления</th>
       <th>Дата установки</th>
       <th>Действия</th>
-      <th>Поставщик</th>
+     
     </tr>
   </thead>
 
@@ -162,6 +162,8 @@
       <th>Количество</th>
       <th>Дата поступления</th>
       <th>Место хранения</th>
+      <th>Поставщик</th>
+
     </tr>
   </thead>
   <tbody id="arrivalBody"></tbody>
@@ -243,7 +245,7 @@ row.insertCell(6).textContent = item.installed || "";
 row.insertCell(7).innerHTML = `
   <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
   <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>`;
-row.insertCell(8).textContent = item.supplier || ""; // 👈 теперь последний
+
 
     }
   });
@@ -428,6 +430,8 @@ function renderArrivalHistory() {
       row.insertCell(2).textContent = entry.qty;
       row.insertCell(3).textContent = entry.date;
       row.insertCell(4).textContent = entry.location;
+      row.insertCell(5).textContent = entry.supplier || "";
+
     }
   });
 }
