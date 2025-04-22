@@ -213,6 +213,7 @@ window.onload = () => {
   renderTable();
   renderHistory();
   renderArrivalHistory();
+   autoSaveIfDue();
 };
 
 function renderTable() {
@@ -588,6 +589,18 @@ function clearArrivalHistory() {
     }
   } else {
     alert("Неверный PIN.");
+  }
+}
+function autoSaveIfDue() {
+  const lastSave = localStorage.getItem("lastAutoJsonSave");
+  const now = Date.now();
+
+  if (!lastSave || now - parseInt(lastSave) > 10 * 24 * 60 * 60 * 1000) {
+    saveToJSON();
+    localStorage.setItem("lastAutoJsonSave", now.toString());
+    console.log("Автосохранение JSON: прошло 10 дней.");
+  } else {
+    console.log("Автосохранение JSON: не требуется.");
   }
 }
 
