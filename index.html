@@ -256,11 +256,13 @@ function saveEntry() {
   const quantity = parseInt(document.getElementById("quantity").value.trim());
   const location = document.getElementById("location").value.trim();
   const installed = document.getElementById("installed").value;
-  const supplier = document.getElementById("supplier").value.trim();
+  const supplier = document.getElementById("supplier").value.trim(); // 💡 возможно забыли это
+
   if (!name || !catalog || isNaN(quantity) || !location) {
     alert("Заполните все поля");
     return;
   }
+
   const now = new Date();
   const arrival = now.toLocaleDateString("ru-RU");
   const entry = { name, catalog, quantity, location, installed, arrival, supplier };
@@ -277,13 +279,13 @@ function saveEntry() {
       partsData.push(entry);
     }
     arrivalLog.push({ catalog, name, qty: quantity, date: arrival, location, supplier });
-
   }
 
   saveToLocalStorage();
   renderTable();
   toggleForm(false);
 }
+
   function saveAndContinue() {
   const name = document.getElementById("name").value.trim();
   const catalog = document.getElementById("catalog").value.trim();
