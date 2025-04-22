@@ -42,7 +42,6 @@
 <input type="file" id="jsonFileInput" style="display:none" onchange="loadFromJSON(event)">
 <button onclick="document.getElementById('jsonFileInput').click()">📂 Загрузить из JSON</button>
 <button onclick="toggleHistory()">📜 Общая история</button>
-<button onclick="exportHistoryToExcel()">📤 Экспорт истории</button>
 <button onclick="toggleArrivalHistory()">📥 История поступлений</button>
 
 <table id="partsTable">
@@ -111,6 +110,16 @@
 
 <!-- История установок -->
 <h3>История установок</h3>
+  <input type="text" id="historySearchInput" placeholder="Поиск по каталожному номеру или наименованию" oninput="renderHistory()">
+
+<div style="margin: 10px 0;">
+  <label>С:</label>
+  <input type="date" id="installFrom">
+  <label>По:</label>
+  <input type="date" id="installTo">
+  <button onclick="exportFilteredInstallations()">📤 Экспорт установок по дате</button>
+</div>
+
 <input type="text" id="historySearchInput" placeholder="Поиск по каталожному номеру или наименованию" oninput="renderHistory()">
 <table id="historyTable" style="display:none;">
   <thead>
@@ -519,6 +528,30 @@ function exportFilteredArrivals() {
   XLSX.utils.book_append_sheet(wb, ws, "Поступления");
   XLSX.writeFile(wb, "arrival_filtered.xlsx");
 }
+  function exportFilteredInstallations() {
+  const from = document.getElementById("installFrom").value;
+  const to = document.getElementById("installTo").value;
+
+  const data = [["Каталожный номер", "Наименование", "Количество", "Дата установки", "Техника"]];
+
+  historyLog.forEach(entry => {
+    const date = entry.date.split('.').reverse().join('-');
+    if ((!from || date >= from) && (!to || date <= to)) {
+      data.push([entry.catalog, entry.name, entry.qty, entry.date, entry.tech]);
+    }
+  });
+
+  if (data.length === 1) {
+    alert("Нет установок за указанный период.");
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, "Установки");
+  XLSX.writeFile(wb, "installations_filtered.xlsx");
+}
+
 
 </script>
 </body>
