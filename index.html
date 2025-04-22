@@ -41,8 +41,8 @@
 <button onclick="saveToJSON()">💾 Сохранить в JSON</button>
 <input type="file" id="jsonFileInput" style="display:none" onchange="loadFromJSON(event)">
 <button onclick="document.getElementById('jsonFileInput').click()">📂 Загрузить из JSON</button>
-<button onclick="toggleHistory()">История установок</button>
-<button onclick="toggleArrivalHistory()">📥 История поступлений</button>
+
+
 
 <table id="partsTable">
   <thead>
@@ -111,6 +111,8 @@
 <!-- История установок -->
 <h3>История установок</h3>
   <input type="text" id="historySearchInput" placeholder="Поиск по каталожному номеру или наименованию" oninput="renderHistory()">
+  <button onclick="toggleHistory()">📜 История установок</button>
+
 <div style="margin: 10px 0;">
   <label>С:</label>
   <input type="date" id="installFrom">
@@ -138,6 +140,7 @@
 <!-- История поступлений -->
 <h3>История поступлений</h3>
  <input type="text" id="arrivalSearchInput" placeholder="Поиск по каталожному номеру или наименованию" oninput="renderArrivalHistory()">
+  <button onclick="toggleArrivalHistory()">📥 История поступлений</button>
 <div style="margin: 10px 0;">
   <label>С:</label>
   <input type="date" id="arrivalFrom">
