@@ -51,10 +51,10 @@
       <th>Наименование</th>
       <th>Количество</th>
       <th>Место хранения</th>
-      <th>Поставщик</th> <!-- ← новый столбец -->
       <th>Дата поступления</th>
       <th>Дата установки</th>
       <th>Действия</th>
+      <th>Поставщик</th>
     </tr>
   </thead>
 
@@ -233,15 +233,17 @@ function renderTable() {
     ) {
       const row = tbody.insertRow();
       row.insertCell(0).textContent = counter++;
-      row.insertCell(1).textContent = item.catalog;
-      row.insertCell(2).textContent = item.name;
-      row.insertCell(3).textContent = item.quantity;
-      row.insertCell(4).textContent = item.location;
-      row.insertCell(5).textContent = item.arrival;
-      row.insertCell(6).textContent = item.installed || "";
-      row.insertCell(7).innerHTML = `
-        <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
-        <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>`;
+row.insertCell(1).textContent = item.catalog;
+row.insertCell(2).textContent = item.name;
+row.insertCell(3).textContent = item.quantity;
+row.insertCell(4).textContent = item.location;
+row.insertCell(5).textContent = item.arrival;
+row.insertCell(6).textContent = item.installed || "";
+row.insertCell(7).innerHTML = `
+  <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
+  <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>`;
+row.insertCell(8).textContent = item.supplier || ""; // 👈 теперь последний
+
     }
   });
 }
