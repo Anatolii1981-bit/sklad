@@ -31,6 +31,13 @@
   </style>
 </head>
 <body>
+  <div id="authScreen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10000;">
+  <h2>Введіть пароль для входу</h2>
+  <input type="password" id="authInput" placeholder="Пароль">
+  <button onclick="checkPassword()">Увійти</button>
+  <p id="authMessage" style="color:red; margin-top:10px;"></p>
+</div>
+
 <h2>Склад зберігання запчастин</h2>
 
 <input type="text" id="searchInput" placeholder="Поиск..." oninput="renderTable()">
@@ -663,6 +670,16 @@ function autoSaveIfDue() {
     console.log("Автозбереження JSON: минуло 10 днів.");
   } else {
     console.log("Автозбереження JSON: не потрібно.");
+  }
+}
+function checkPassword() {
+  const input = document.getElementById("authInput").value;
+  const message = document.getElementById("authMessage");
+
+  if (input === "1234") { // ← здесь пароль
+    document.getElementById("authScreen").style.display = "none";
+  } else {
+    message.textContent = "В доступі відмовлено";
   }
 }
 
