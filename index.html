@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Склад запчастей</title>
+  <title>Склад запчастин</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     body { font-family: sans-serif; padding: 20px; }
@@ -31,28 +31,28 @@
   </style>
 </head>
 <body>
-<h2>Склад хранения запчастей</h2>
+<h2>Склад зберігання запчастин</h2>
 
 <input type="text" id="searchInput" placeholder="Поиск..." oninput="renderTable()">
-<button onclick="toggleForm()">Добавить новую</button>
+<button onclick="toggleForm()">Добавити нову</button>
 
-<button onclick="openTechManager()">Управление техникой</button>
-<button onclick="saveToJSON()">💾 Сохранить в JSON</button>
+<button onclick="openTechManager()">Управління технікою</button>
+<button onclick="saveToJSON()">💾 Зберегти в JSON</button>
 <input type="file" id="jsonFileInput" style="display:none" onchange="loadFromJSON(event)">
-<button onclick="document.getElementById('jsonFileInput').click()">📂 Загрузить из JSON</button>
+<button onclick="document.getElementById('jsonFileInput').click()">📂 Загрузити из JSON</button>
 <button onclick="exportToExcel()">Экспорт склада</button>
-<button onclick="exportTechPark()">Экспорт техники</button>
+<button onclick="exportTechPark()">Экспорт техніки</button>
 
 <table id="partsTable">
   <thead>
     <tr>
       <th>№</th>
-      <th>Каталожный номер</th>
-      <th>Наименование</th>
-      <th>Количество</th>
-      <th>Место хранения</th>
-      <th>Дата поступления</th>
-      <th>Дата установки</th>
+      <th>Каталоговий номер</th>
+      <th>Найменування</th>
+      <th>Кількість</th>
+      <th>Місце зберігання</th>
+      <th>Дата надходження</th>
+      <th>Дата встановлення</th>
       <th>Действия</th>
      
     </tr>
@@ -62,107 +62,107 @@
 </table>
 
 <div id="formRow" style="display:none;">
-  <input id="catalog" placeholder="Каталожный номер">
-  <input id="name" placeholder="Наименование">
-  <input type="number" id="quantity" placeholder="Количество">
-  <input id="location" placeholder="Место хранения">
-  <input id="supplier" placeholder="Поставщик">
-  <input type="date" id="installed" placeholder="Дата установки">
-  <button onclick="saveEntry()">Сохранить</button>
+  <input id="catalog" placeholder="Каталоговий номер">
+  <input id="name" placeholder="Найменування">
+  <input type="number" id="quantity" placeholder="Кількість">
+  <input id="location" placeholder="Місце зберігання">
+  <input id="supplier" placeholder="Постачальник">
+  <input type="date" id="installed" placeholder="Дата встановлення">
+  <button onclick="saveEntry()">Зберегти</button>
  
 </div>
 
 <div id="installRow">
-  <strong>Установка запчасти:</strong><br>
-  <label>Количество:</label>
-  <input type="number" id="installQty" placeholder="Сколько установить?">
-  <label>Группа техники:</label>
+  <strong>Встановлення запчастини:</strong><br>
+  <label>Кількість:</label>
+  <input type="number" id="installQty" placeholder="Скільки встановити?">
+  <label>Група техніки:</label>
   <select id="installGroup" onchange="updateTechOptions()">
-    <option value="">-- выберите группу --</option>
+    <option value="">-- виберіть групу --</option>
     <option value="Трактор">Трактор</option>
     <option value="Комбайн">Комбайн</option>
-    <option value="Опрыскиватель">Опрыскиватель</option>
-    <option value="Сеялка">Сеялка</option>
-    <option value="Другое">Другое</option>
+    <option value="Оприскувач">Оприскувач</option>
+    <option value="Сівалка">Сівалка</option>
+    <option value="Інше">Інше</option>
   </select>
-  <label>Техника:</label>
+  <label>Техніка:</label>
   <select id="installTech">
-    <option value="">-- выберите технику --</option>
+    <option value="">-- виберіть техніку --</option>
   </select>
-  <button onclick="confirmInstall()">Подтвердить установку</button>
-  <button onclick="cancelInstall()">Отмена</button>
+  <button onclick="confirmInstall()">Підтвердити встановлення</button>
+  <button onclick="cancelInstall()">Відміна</button>
 </div>
 <!-- Модальное окно управления техникой -->
 <div class="modal" id="techModal">
   <div class="modal-content">
-    <h3>Управление техникой</h3>
-    <label>Группа:</label>
+    <h3>Управління технікою</h3>
+    <label>Група:</label>
     <select id="groupSelect" onchange="renderTechList()">
       <option value="Трактор">Трактор</option>
       <option value="Комбайн">Комбайн</option>
-      <option value="Опрыскиватель">Опрыскиватель</option>
-      <option value="Сеялка">Сеялка</option>
-      <option value="Другое">Другое</option>
+      <option value="Оприскувач">Оприскувач</option>
+      <option value="Сівалка">Сівалка</option>
+      <option value="Інше">Інше</option>
     </select>
     <ul id="techList"></ul>
-    <input id="newTech" placeholder="Новая техника">
-    <button onclick="addTech()">Добавить</button>
-    <button onclick="closeTechManager()">Закрыть</button>
+    <input id="newTech" placeholder="Нова техніка">
+    <button onclick="addTech()">Добавити</button>
+    <button onclick="closeTechManager()">Закрити</button>
   </div>
 </div>
 
-<!-- История установок -->
-<h3>История установок</h3>
-  <input type="text" id="historySearchInput" placeholder="Поиск по каталожному номеру или наименованию" oninput="renderHistory()">
-  <button onclick="toggleHistory()">📜 История установок</button>
+<!-- Історія встановлення -->
+<h3>Історія встановлення</h3>
+  <input type="text" id="historySearchInput" placeholder="Поиск по каталоговому номеру найменування" oninput="renderHistory()">
+  <button onclick="toggleHistory()">📜 Історія встановлення</button>
 
 <div style="margin: 10px 0;">
   <label>С:</label>
   <input type="date" id="installFrom">
   <label>По:</label>
   <input type="date" id="installTo">
-  <button onclick="exportFilteredInstallations()">📤 Экспорт установок по дате</button>
+  <button onclick="exportFilteredInstallations()">📤 Экспорт встановлення по даті</button>
 </div>
 
 
 <table id="historyTable" style="display:none;">
- <button onclick="clearInstallHistory()">🧹 Очистить историю установок</button>
+ <button onclick="clearInstallHistory()">🧹 Очистити історію встановлення</button>
  
   <thead>
     <tr>
-      <th>Каталожный номер</th>
-      <th>Наименование</th>
-      <th>Количество</th>
-      <th>Дата установки</th>
-      <th>Техника</th>
+      <th>Каталоговий номер</th>
+      <th>Найменування</th>
+      <th>Кількість</th>
+      <th>Дата встановлення</th>
+      <th>Техніка</th>
     </tr>
   </thead>
   <tbody id="historyBody"></tbody>
 </table>
 
-<!-- История поступлений -->
-<h3>История поступлений</h3>
+<!-- Історія надходжень -->
+<h3>Історія надходжень</h3>
  <input type="text" id="arrivalSearchInput" placeholder="Поиск по каталожному номеру или наименованию" oninput="renderArrivalHistory()">
-  <button onclick="toggleArrivalHistory()">📥 История поступлений</button>
+  <button onclick="toggleArrivalHistory()">📥 Історія надходжень</button>
 <div style="margin: 10px 0;">
   <label>С:</label>
   <input type="date" id="arrivalFrom">
   <label>По:</label>
   <input type="date" id="arrivalTo">
-  <button onclick="exportFilteredArrivals()">📤 Экспорт поступлений по дате</button>
+  <button onclick="exportFilteredArrivals()">📤 Экспорт надходжень по даті</button>
 </div>
   
 <table id="arrivalHistoryTable" style="display:none;">
-  <button onclick="clearArrivalHistory()">🧹 Очистить историю поступлений</button>
+  <button onclick="clearArrivalHistory()">🧹 Очистити історію надходжень</button>
 
   <thead>
     <tr>
-      <th>Каталожный номер</th>
-      <th>Наименование</th>
-      <th>Количество</th>
-      <th>Дата поступления</th>
-      <th>Место хранения</th>
-      <th>Поставщик</th>
+      <th>Каталогови номер</th>
+      <th>Найменування</th>
+      <th>Кількість</th>
+      <th>Дата надходжень</th>
+      <th>Месце зберігання</th>
+      <th>Постачальник</th>
 
     </tr>
   </thead>
@@ -261,7 +261,7 @@ function saveEntry() {
   const supplier = document.getElementById("supplier").value.trim(); // 💡 возможно забыли это
 
   if (!name || !catalog || isNaN(quantity) || !location) {
-    alert("Заполните все поля");
+    alert("Заповнити всі  поля");
     return;
   }
 
@@ -305,7 +305,7 @@ document.getElementById("catalog").focus();
   const supplier = document.getElementById("supplier").value.trim();
 
   if (!name || !catalog || isNaN(quantity) || !location) {
-    alert("Заполните все поля");
+    alert("Заповнити всі поля");
     return;
   }
 
@@ -342,12 +342,12 @@ function confirmInstall() {
   const group = document.getElementById("installGroup").value;
   const tech = document.getElementById("installTech").value;
   if (currentInstallIndex === null || isNaN(qty) || qty <= 0 || !group || !tech) {
-    alert("Заполните все поля установки");
+    alert("Заповнити всі поля встановлення");
     return;
   }
   const part = partsData[currentInstallIndex];
   if (qty > part.quantity) {
-    alert("Нельзя установить больше, чем есть на складе");
+    alert("Неможна встановити більше, ніж є на складі");
     return;
   }
 
@@ -382,7 +382,7 @@ function startInstall(index) {
 }
 
 function deleteRow(index) {
-  if (confirm("Удалить эту строку?")) {
+  if (confirm("Видалити цей рядок?")) {
     partsData.splice(index, 1);
     saveToLocalStorage();
     renderTable();
@@ -438,7 +438,7 @@ function renderArrivalHistory() {
 
 
 function exportToExcel() {
-  const ws_data = [["№", "Каталожный номер", "Наименование", "Количество", "Место хранения", "Дата поступления", "Дата установки"]];
+  const ws_data = [["№", "Каталоговий номер", "Найменування", "Кількість", "Месце зберігання", "Дата надходження", "Дата встеновлення"]];
   partsData.forEach((item, index) => {
     if (item.quantity > 0) {
       ws_data.push([
@@ -459,24 +459,24 @@ function exportToExcel() {
 }
 
 function exportHistoryToExcel() {
-  const data = [["Каталожный номер", "Наименование", "Количество", "Дата установки", "Техника"]];
+  const data = [["Каталоговий номер", "Найменування", "Кількість", "Дата встановлення", "Техніка"]];
   historyLog.forEach(h => {
     data.push([h.catalog, h.name, h.qty, h.date, h.tech]);
   });
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(data);
-  XLSX.utils.book_append_sheet(wb, ws, "История");
+  XLSX.utils.book_append_sheet(wb, ws, "Історія");
   XLSX.writeFile(wb, "history.xlsx");
 }
 
 function exportTechPark() {
-  const data = [["Группа", "Техника"]];
+  const data = [["Група", "Техніка"]];
   for (let group in techGroups) {
     techGroups[group].forEach(tech => data.push([group, tech]));
   }
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(data);
-  XLSX.utils.book_append_sheet(wb, ws, "Техника");
+  XLSX.utils.book_append_sheet(wb, ws, "Техніка");
   XLSX.writeFile(wb, "techpark.xlsx");
 }
 
@@ -506,9 +506,9 @@ function loadFromJSON(event) {
       renderTable();
       renderHistory();
       renderArrivalHistory();
-      alert("Данные успешно загружены из JSON!");
+      alert("Дані успішно завантажені з JSON!");
     } catch (err) {
-      alert("Ошибка загрузки JSON: " + err.message);
+      alert("Помилка загрузки JSON: " + err.message);
     }
   };
   reader.readAsText(file);
@@ -532,7 +532,7 @@ function renderTechList() {
     const li = document.createElement("li");
     li.textContent = tech + " ";
     const del = document.createElement("button");
-    del.textContent = "Удалить";
+    del.textContent = "Видалити";
     del.onclick = () => {
       techGroups[group].splice(i, 1);
       saveToLocalStorage();
@@ -568,7 +568,7 @@ function addTech() {
 function updateTechOptions() {
   const group = document.getElementById("installGroup").value;
   const select = document.getElementById("installTech");
-  select.innerHTML = '<option value="">-- выберите технику --</option>';
+  select.innerHTML = '<option value="">-- виберіть техніку --</option>';
 
   if (group && techGroups[group]) {
     techGroups[group].forEach(tech => {
@@ -583,7 +583,7 @@ function exportFilteredArrivals() {
   const from = document.getElementById("arrivalFrom").value;
   const to = document.getElementById("arrivalTo").value;
 
-  const data = [["Каталожный номер", "Наименование", "Количество", "Дата поступления", "Место хранения"]];
+  const data = [["Каталоговий номер", "Найменування", "Кількість", "Дата надходження", "Місце зберігання"]];
 
   arrivalLog.forEach(entry => {
     const date = entry.date.split('.').reverse().join('-'); // Преобразуем в ISO для сравнения
@@ -594,20 +594,20 @@ function exportFilteredArrivals() {
   });
 
   if (data.length === 1) {
-    alert("Нет записей за указанный период.");
+    alert("Немає записів за вказаний період.");
     return;
   }
 
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(data);
-  XLSX.utils.book_append_sheet(wb, ws, "Поступления");
+  XLSX.utils.book_append_sheet(wb, ws, "Надходження");
   XLSX.writeFile(wb, "arrival_filtered.xlsx");
 }
   function exportFilteredInstallations() {
   const from = document.getElementById("installFrom").value;
   const to = document.getElementById("installTo").value;
 
-  const data = [["Каталожный номер", "Наименование", "Количество", "Дата установки", "Техника"]];
+  const data = [["Каталоговий номер", "Найменування", "Кількість", "Дата встановлення", "Техніка"]];
 
   historyLog.forEach(entry => {
     const date = entry.date.split('.').reverse().join('-');
@@ -617,23 +617,23 @@ function exportFilteredArrivals() {
   });
 
   if (data.length === 1) {
-    alert("Нет установок за указанный период.");
+    alert("Немає установок за вказаний період.");
     return;
   }
 
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(data);
-  XLSX.utils.book_append_sheet(wb, ws, "Установки");
+  XLSX.utils.book_append_sheet(wb, ws, "Встановлення");
   XLSX.writeFile(wb, "installations_filtered.xlsx");
 }
 function clearInstallHistory() {
-  const pin = prompt("Введите PIN-код для очистки истории установок:");
+  const pin = prompt("Введіть PIN-код для очищення історії установок:");
   if (pin === "0918") {
-    if (confirm("Вы уверены, что хотите удалить всю историю установок?")) {
+    if (confirm("Ви впевнені, що хочете видалити всю історію установок?")) {
       historyLog = [];
       saveToLocalStorage();
       renderHistory();
-      alert("История установок очищена.");
+      alert("Історія установок очищена.");
     }
   } else {
     alert("Неверный PIN.");
@@ -641,16 +641,16 @@ function clearInstallHistory() {
 }
 
 function clearArrivalHistory() {
-  const pin = prompt("Введите PIN-код для очистки истории поступлений:");
+  const pin = prompt("Введіть PIN-код для очищення історії надходжень:");
   if (pin === "0918") {
-    if (confirm("Вы уверены, что хотите удалить всю историю поступлений?")) {
+    if (confirm("Ви впевнені, що хочете видалити всю історію надходжень?")) {
       arrivalLog = [];
       saveToLocalStorage();
       renderArrivalHistory();
-      alert("История поступлений очищена.");
+      alert("Історія надходжень очищена.");
     }
   } else {
-    alert("Неверный PIN.");
+    alert("Невірний PIN.");
   }
 }
 function autoSaveIfDue() {
@@ -660,9 +660,9 @@ function autoSaveIfDue() {
   if (!lastSave || now - parseInt(lastSave) > 10 * 24 * 60 * 60 * 1000) {
     saveToJSON();
     localStorage.setItem("lastAutoJsonSave", now.toString());
-    console.log("Автосохранение JSON: прошло 10 дней.");
+    console.log("Автозбереження JSON: минуло 10 днів.");
   } else {
-    console.log("Автосохранение JSON: не требуется.");
+    console.log("Автозбереження JSON: не потрібно.");
   }
 }
 
