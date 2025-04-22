@@ -111,7 +111,6 @@
 <!-- История установок -->
 <h3>История установок</h3>
   <input type="text" id="historySearchInput" placeholder="Поиск по каталожному номеру или наименованию" oninput="renderHistory()">
-
 <div style="margin: 10px 0;">
   <label>С:</label>
   <input type="date" id="installFrom">
@@ -139,7 +138,6 @@
 <!-- История поступлений -->
 <h3>История поступлений</h3>
   <input type="text" id="arrivalSearchInput" placeholder="Поиск по каталожному номеру" oninput="renderArrivalHistory()">
-
 <div style="margin: 10px 0;">
   <label>С:</label>
   <input type="date" id="arrivalFrom">
@@ -331,6 +329,7 @@ function deleteRow(index) {
 function renderHistory(filterCatalog = null) {
   const tbody = document.getElementById("historyBody");
   tbody.innerHTML = "";
+
   const inputFilter = document.getElementById("historySearchInput")?.value.toLowerCase() || "";
   const catalogFilter = filterCatalog?.toLowerCase() || "";
 
@@ -339,6 +338,7 @@ function renderHistory(filterCatalog = null) {
     const entryName = entry.name.toLowerCase();
     const matchesCatalog = !catalogFilter || entryCatalog === catalogFilter;
     const matchesInput = !inputFilter || entryCatalog.includes(inputFilter) || entryName.includes(inputFilter);
+
     if (matchesCatalog && matchesInput) {
       const row = tbody.insertRow();
       row.insertCell(0).textContent = entry.catalog;
@@ -368,6 +368,7 @@ function renderArrivalHistory() {
     }
   });
 }
+
 function exportToExcel() {
   const ws_data = [["№", "Каталожный номер", "Наименование", "Количество", "Место хранения", "Дата поступления", "Дата установки"]];
   partsData.forEach((item, index) => {
