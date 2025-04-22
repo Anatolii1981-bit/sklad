@@ -33,7 +33,7 @@
 <body>
 <h2>Склад хранения запчастей</h2>
 
-<input type="text" id="searchInput" placeholder="Поиск...">
+<input type="text" id="searchInput" placeholder="Поиск..." oninput="renderTable()">
 <button onclick="toggleForm()">Добавить новую</button>
 <button onclick="exportToExcel()">Экспорт склада</button>
 <button onclick="exportTechPark()">Экспорт техники</button>
@@ -241,6 +241,7 @@ function renderTable() {
     }
   });
 }
+
 
 function saveEntry() {
   const name = document.getElementById("name").value.trim();
