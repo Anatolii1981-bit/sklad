@@ -122,6 +122,8 @@
 
 <input type="text" id="historySearchInput" placeholder="Поиск по каталожному номеру или наименованию" oninput="renderHistory()">
 <table id="historyTable" style="display:none;">
+ <button onclick="clearInstallHistory()">🧹 Очистить историю установок</button>
+ 
   <thead>
     <tr>
       <th>Каталожный номер</th>
@@ -147,6 +149,8 @@
 </div>
   <input type="text" id="arrivalSearchInput" placeholder="Поиск по каталожному номеру" oninput="renderArrivalHistory()">
 <table id="arrivalHistoryTable" style="display:none;">
+  <button onclick="clearArrivalHistory()">🧹 Очистить историю поступлений</button>
+
   <thead>
     <tr>
       <th>Каталожный номер</th>
@@ -550,6 +554,33 @@ function exportFilteredArrivals() {
   const ws = XLSX.utils.aoa_to_sheet(data);
   XLSX.utils.book_append_sheet(wb, ws, "Установки");
   XLSX.writeFile(wb, "installations_filtered.xlsx");
+}
+function clearInstallHistory() {
+  const pin = prompt("Введите PIN-код для очистки истории установок:");
+  if (pin === "0918") {
+    if (confirm("Вы уверены, что хотите удалить всю историю установок?")) {
+      historyLog = [];
+      saveToLocalStorage();
+      renderHistory();
+      alert("История установок очищена.");
+    }
+  } else {
+    alert("Неверный PIN.");
+  }
+}
+
+function clearArrivalHistory() {
+  const pin = prompt("Введите PIN-код для очистки истории поступлений:");
+  if (pin === "0918") {
+    if (confirm("Вы уверены, что хотите удалить всю историю поступлений?")) {
+      arrivalLog = [];
+      saveToLocalStorage();
+      renderArrivalHistory();
+      alert("История поступлений очищена.");
+    }
+  } else {
+    alert("Неверный PIN.");
+  }
 }
 
 
