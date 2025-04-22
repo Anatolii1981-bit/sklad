@@ -35,14 +35,14 @@
 
 <input type="text" id="searchInput" placeholder="Поиск..." oninput="renderTable()">
 <button onclick="toggleForm()">Добавить новую</button>
-<button onclick="exportToExcel()">Экспорт склада</button>
-<button onclick="exportTechPark()">Экспорт техники</button>
+
+
 <button onclick="openTechManager()">Управление техникой</button>
 <button onclick="saveToJSON()">💾 Сохранить в JSON</button>
 <input type="file" id="jsonFileInput" style="display:none" onchange="loadFromJSON(event)">
 <button onclick="document.getElementById('jsonFileInput').click()">📂 Загрузить из JSON</button>
-
-
+<button onclick="exportToExcel()">Экспорт склада</button>
+<button onclick="exportTechPark()">Экспорт техники</button>
 
 <table id="partsTable">
   <thead>
