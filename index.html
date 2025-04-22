@@ -69,6 +69,7 @@
   <input id="supplier" placeholder="Поставщик">
   <input type="date" id="installed" placeholder="Дата установки">
   <button onclick="saveEntry()">Сохранить</button>
+  <button onclick="saveAndContinue()">➕ Добавить ещё</button>
 </div>
 
 <div id="installRow">
@@ -283,6 +284,46 @@ function saveEntry() {
   renderTable();
   toggleForm(false);
 }
+  function saveAndContinue() {
+  const name = document.getElementById("name").value.trim();
+  const catalog = document.getElementById("catalog").value.trim();
+  const quantity = parseInt(document.getElementById("quantity").value.trim());
+  const location = document.getElementById("location").value.trim();
+  const installed = document.getElementById("installed").value;
+  const supplier = document.getElementById("supplier").value.trim();
+
+  if (!name || !catalog || isNaN(quantity) || !location) {
+    alert("Заполните все поля");
+    return;
+  }
+
+  const now = new Date();
+  const arrival = now.toLocaleDateString("ru-RU");
+  const entry = { name, catalog, quantity, location, installed, arrival, supplier };
+
+  const existing = partsData.find(p => p.catalog.toLowerCase() === catalog.toLowerCase());
+  if (existing) {
+    existing.quantity += quantity;
+    existing.arrival = arrival;
+  } else {
+    partsData.push(entry);
+  }
+
+  arrivalLog.push({ catalog, name, qty: quantity, date: arrival, location, supplier });
+
+  saveToLocalStorage();
+  renderTable();
+
+  // очищаем поля, но не закрываем форму
+  document.getElementById("name").value = "";
+  document.getElementById("catalog").value = "";
+  document.getElementById("quantity").value = "";
+  document.getElementById("location").value = "";
+  document.getElementById("supplier").value = "";
+  document.getElementById("installed").value = "";
+  document.getElementById("catalog").focus();
+}
+
 
 function confirmInstall() {
   const qty = parseInt(document.getElementById("installQty").value);
