@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ua">
 <head>
   <meta charset="UTF-8">
   <title>Склад запчастин</title>
@@ -39,7 +39,7 @@
 <button onclick="openTechManager()">Управління технікою</button>
 <button onclick="saveToJSON()">💾 Зберегти в JSON</button>
 <input type="file" id="jsonFileInput" style="display:none" onchange="loadFromJSON(event)">
-<button onclick="document.getElementById('jsonFileInput').click()">📂 Загрузити из JSON</button>
+<button onclick="document.getElementById('jsonFileInput').click()">📂 Завантажити із JSON</button>
 <button onclick="exportToExcel()">Экспорт склада</button>
 <button onclick="exportTechPark()">Экспорт техніки</button>
 
@@ -47,7 +47,7 @@
   <thead>
     <tr>
       <th>№</th>
-      <th>Каталоговий номер</th>
+      <th>Каталожний номер</th>
       <th>Найменування</th>
       <th>Кількість</th>
       <th>Місце зберігання</th>
@@ -62,7 +62,7 @@
 </table>
 
 <div id="formRow" style="display:none;">
-  <input id="catalog" placeholder="Каталоговий номер">
+  <input id="catalog" placeholder="Каталожний номер">
   <input id="name" placeholder="Найменування">
   <input type="number" id="quantity" placeholder="Кількість">
   <input id="location" placeholder="Місце зберігання">
@@ -113,7 +113,7 @@
 
 <!-- Історія встановлення -->
 <h3>Історія встановлення</h3>
-  <input type="text" id="historySearchInput" placeholder="Поиск по каталоговому номеру найменування" oninput="renderHistory()">
+  <input type="text" id="historySearchInput" placeholder="Поиск по каталожному номеру найменування" oninput="renderHistory()">
   <button onclick="toggleHistory()">📜 Історія встановлення</button>
 
 <div style="margin: 10px 0;">
@@ -121,7 +121,7 @@
   <input type="date" id="installFrom">
   <label>По:</label>
   <input type="date" id="installTo">
-  <button onclick="exportFilteredInstallations()">📤 Экспорт встановлення по даті</button>
+  <button onclick="exportFilteredInstallations()">📤 Експорт встановлення по даті</button>
 </div>
 
 
@@ -130,7 +130,7 @@
  
   <thead>
     <tr>
-      <th>Каталоговий номер</th>
+      <th>Каталожний номер</th>
       <th>Найменування</th>
       <th>Кількість</th>
       <th>Дата встановлення</th>
@@ -142,14 +142,14 @@
 
 <!-- Історія надходжень -->
 <h3>Історія надходжень</h3>
- <input type="text" id="arrivalSearchInput" placeholder="Поиск по каталожному номеру или наименованию" oninput="renderArrivalHistory()">
+ <input type="text" id="arrivalSearchInput" placeholder="Пошук за каталожним номером або найменуванням" oninput="renderArrivalHistory()">
   <button onclick="toggleArrivalHistory()">📥 Історія надходжень</button>
 <div style="margin: 10px 0;">
   <label>С:</label>
   <input type="date" id="arrivalFrom">
   <label>По:</label>
   <input type="date" id="arrivalTo">
-  <button onclick="exportFilteredArrivals()">📤 Экспорт надходжень по даті</button>
+  <button onclick="exportFilteredArrivals()">📤 Експорт надходжень по даті</button>
 </div>
   
 <table id="arrivalHistoryTable" style="display:none;">
@@ -157,7 +157,7 @@
 
   <thead>
     <tr>
-      <th>Каталогови номер</th>
+      <th>Каталожний номер</th>
       <th>Найменування</th>
       <th>Кількість</th>
       <th>Дата надходжень</th>
@@ -376,7 +376,7 @@ function startInstall(index) {
   currentInstallIndex = index;
   document.getElementById("installQty").value = "";
   document.getElementById("installGroup").value = "";
-  document.getElementById("installTech").innerHTML = '<option value="">-- выберите технику --</option>';
+  document.getElementById("installTech").innerHTML = '<option value="">-- виберіть техніку --</option>';
   document.getElementById("installRow").style.display = "block";
   window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
@@ -438,7 +438,7 @@ function renderArrivalHistory() {
 
 
 function exportToExcel() {
-  const ws_data = [["№", "Каталоговий номер", "Найменування", "Кількість", "Месце зберігання", "Дата надходження", "Дата встеновлення"]];
+  const ws_data = [["№", "Каталожний номер", "Найменування", "Кількість", "Месце зберігання", "Дата надходження", "Дата встеновлення"]];
   partsData.forEach((item, index) => {
     if (item.quantity > 0) {
       ws_data.push([
@@ -459,7 +459,7 @@ function exportToExcel() {
 }
 
 function exportHistoryToExcel() {
-  const data = [["Каталоговий номер", "Найменування", "Кількість", "Дата встановлення", "Техніка"]];
+  const data = [["Каталожнийий номер", "Найменування", "Кількість", "Дата встановлення", "Техніка"]];
   historyLog.forEach(h => {
     data.push([h.catalog, h.name, h.qty, h.date, h.tech]);
   });
@@ -607,7 +607,7 @@ function exportFilteredArrivals() {
   const from = document.getElementById("installFrom").value;
   const to = document.getElementById("installTo").value;
 
-  const data = [["Каталоговий номер", "Найменування", "Кількість", "Дата встановлення", "Техніка"]];
+  const data = [["Каталожний номер", "Найменування", "Кількість", "Дата встановлення", "Техніка"]];
 
   historyLog.forEach(entry => {
     const date = entry.date.split('.').reverse().join('-');
@@ -633,10 +633,10 @@ function clearInstallHistory() {
       historyLog = [];
       saveToLocalStorage();
       renderHistory();
-      alert("Історія установок очищена.");
+      alert("Історія встановлень очищена.");
     }
   } else {
-    alert("Неверный PIN.");
+    alert("Невірний PIN.");
   }
 }
 
