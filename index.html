@@ -137,7 +137,7 @@
 
 <!-- История поступлений -->
 <h3>История поступлений</h3>
-  <input type="text" id="arrivalSearchInput" placeholder="Поиск по каталожному номеру" oninput="renderArrivalHistory()">
+ <input type="text" id="arrivalSearchInput" placeholder="Поиск по каталожному номеру или наименованию" oninput="renderArrivalHistory()">
 <div style="margin: 10px 0;">
   <label>С:</label>
   <input type="date" id="arrivalFrom">
@@ -358,7 +358,9 @@ function renderArrivalHistory() {
 
   arrivalLog.forEach(entry => {
     const entryCatalog = entry.catalog.toLowerCase();
-    if (!inputFilter || entryCatalog.includes(inputFilter)) {
+    const entryName = entry.name.toLowerCase();
+
+    if (!inputFilter || entryCatalog.includes(inputFilter) || entryName.includes(inputFilter)) {
       const row = tbody.insertRow();
       row.insertCell(0).textContent = entry.catalog;
       row.insertCell(1).textContent = entry.name;
@@ -368,6 +370,7 @@ function renderArrivalHistory() {
     }
   });
 }
+
 
 function exportToExcel() {
   const ws_data = [["№", "Каталожный номер", "Наименование", "Количество", "Место хранения", "Дата поступления", "Дата установки"]];
