@@ -263,6 +263,11 @@ function saveEntry() {
   const name = document.getElementById("name").value.trim();
   const catalog = document.getElementById("catalog").value.trim();
   const quantity = parseInt(document.getElementById("quantity").value.trim());
+if (quantity <= 0) {
+  alert("Кількість повинна бути більше 0");
+  return;
+}
+
   const location = document.getElementById("location").value.trim();
   const installed = document.getElementById("installed").value;
   const supplier = document.getElementById("supplier").value.trim(); // 💡 возможно забыли это
@@ -307,6 +312,11 @@ document.getElementById("catalog").focus();
   const name = document.getElementById("name").value.trim();
   const catalog = document.getElementById("catalog").value.trim();
   const quantity = parseInt(document.getElementById("quantity").value.trim());
+if (quantity <= 0) {
+  alert("Количество должно быть больше нуля");
+  return;
+}
+
   const location = document.getElementById("location").value.trim();
   const installed = document.getElementById("installed").value;
   const supplier = document.getElementById("supplier").value.trim();
