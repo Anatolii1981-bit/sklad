@@ -284,16 +284,29 @@ function saveEntry() {
     arrivalLog.push({ catalog, name, qty: quantity, date: arrival, location, supplier });
   }
 
-  saveToFirebase();
-  renderTable();
-  document.getElementById("catalog").value = "";
-  document.getElementById("name").value = "";
-  document.getElementById("quantity").value = "";
-  document.getElementById("location").value = "";
-  document.getElementById("supplier").value = "";
-  document.getElementById("installed").value = "";
-  document.getElementById("catalog").focus();
+  // --- ГОЛОВНЕ: ПРАВИЛЬНА ПОСЛІДОВНІСТЬ ---
+  db.ref('warehouse').set({ partsData, techGroups, historyLog, arrivalLog })
+    .then(() => {
+      console.log("Дані збережено в Firebase ✅");
+      return loadFromFirebase(); // завантажити заново
+    })
+    .then(() => {
+      renderTable(); // намалювати оновлену таблицю
+      document.getElementById("catalog").value = "";
+      document.getElementById("name").value = "";
+      document.getElementById("quantity").value = "";
+      document.getElementById("location").value = "";
+      document.getElementById("supplier").value = "";
+      document.getElementById("installed").value = "";
+      document.getElementById("catalog").focus();
+      alert("Запчастина успішно збережена! ✅");
+    })
+    .catch((error) => {
+      console.error("Помилка при збереженні:", error);
+      alert("Помилка збереження: " + error.message);
+    });
 }
+
 
 // --- ТАБЛИЦЯ ЗАПЧАСТИН ---
 function renderTable() {
