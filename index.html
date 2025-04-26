@@ -284,22 +284,15 @@ function saveEntry() {
     arrivalLog.push({ catalog, name, qty: quantity, date: arrival, location, supplier });
   }
 
-  // --- ГОЛОВНЕ: ПРАВИЛЬНА ПОСЛІДОВНІСТЬ ---
+  // Оновлюємо базу та перерисовуємо таблицю
   db.ref('warehouse').set({ partsData, techGroups, historyLog, arrivalLog })
     .then(() => {
-      console.log("Дані збережено в Firebase ✅");
-      return loadFromFirebase(); // завантажити заново
-    })
-    .then(() => {
-      renderTable(); // намалювати оновлену таблицю
-      document.getElementById("catalog").value = "";
-      document.getElementById("name").value = "";
-      document.getElementById("quantity").value = "";
-      document.getElementById("location").value = "";
-      document.getElementById("supplier").value = "";
-      document.getElementById("installed").value = "";
-      document.getElementById("catalog").focus();
-      alert("Запчастина успішно збережена! ✅");
+      console.log("Дані збережені в Firebase ✅");
+      renderTable();          // Перемалювати таблицю
+      renderHistory();        // Перемалювати історію встановлень
+      renderArrivalHistory(); // Перемалювати історію надходжень
+      clearForm();            // Очистити форму
+      alert("Запчастину успішно збережено! ✅");
     })
     .catch((error) => {
       console.error("Помилка при збереженні:", error);
