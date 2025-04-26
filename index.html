@@ -465,6 +465,66 @@ function exportToExcel() {
   XLSX.utils.book_append_sheet(wb, ws, "Склад");
   XLSX.writeFile(wb, "sklad.xlsx");
 }
+  <script>
+// Открыть/закрыть форму добавления запчасти
+function toggleForm(force = null) {
+  const form = document.getElementById("formRow");
+  if (!form) return;
+  if (force === true) {
+    form.style.display = "block";
+  } else if (force === false) {
+    form.style.display = "none";
+  } else {
+    form.style.display = (form.style.display === "none") ? "block" : "none";
+  }
+}
+
+// Открыть модалку "Управління технікою"
+function openTechManager() {
+  document.getElementById("techModal").style.display = "flex";
+  renderTechList();
+}
+
+// Закрыть модалку
+function closeTechManager() {
+  document.getElementById("techModal").style.display = "none";
+}
+
+// Обновить список техники в модалке
+function renderTechList() {
+  const group = document.getElementById("groupSelect").value;
+  const list = techGroups[group] || [];
+  const ul = document.getElementById("techList");
+  ul.innerHTML = "";
+
+  list.forEach((tech, i) => {
+    const li = document.createElement("li");
+    li.textContent = tech + " ";
+    const del = document.createElement("button");
+    del.textContent = "Видалити";
+    del.onclick = () => {
+      techGroups[group].splice(i, 1);
+      saveToFirebase();
+      renderTechList();
+    };
+    li.appendChild(del);
+    ul.appendChild(li);
+  });
+}
+
+// Добавить новую технику в выбранную группу
+function addTech() {
+  const group = document.getElementById("groupSelect").value;
+  const newTech = document.getElementById("newTech").value.trim();
+  if (!newTech) return;
+  techGroups[group] = techGroups[group] || [];
+  techGroups[group].push(newTech);
+  document.getElementById("newTech").value = "";
+  saveToFirebase();
+  renderTechList();
+}
+</script>
+
 </script>
 </body>
 </html>
