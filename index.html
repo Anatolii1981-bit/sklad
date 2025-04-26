@@ -196,6 +196,7 @@
 
 <!-- (тут я окремо дороблю вставку всіх функцій) -->
 <script>
+// Дані
 let partsData = [];
 let techGroups = {};
 let historyLog = [];
@@ -206,32 +207,41 @@ let currentInstallIndex = null;
 let historyVisible = false;
 let arrivalVisible = false;
 
-// Збереження в Firebase
+// Зберігання даних у Firebase
 function saveToFirebase() {
-  db.ref('warehouse').set({ partsData, techGroups, historyLog, arrivalLog });
+  db.ref('warehouse').set({
+    partsData: partsData,
+    techGroups: techGroups,
+    historyLog: historyLog,
+    arrivalLog: arrivalLog
+  });
 }
 
-// Завантаження з Firebase
+// Завантаження даних з Firebase
 function loadFromFirebase() {
-  db.ref('warehouse').once('value').then(snapshot => {
+  db.ref('warehouse').once('value').then((snapshot) => {
     const data = snapshot.val();
     if (data) {
       partsData = data.partsData || [];
       techGroups = data.techGroups || {};
       historyLog = data.historyLog || [];
       arrivalLog = data.arrivalLog || [];
-      renderTable();
-      renderHistory();
-      renderArrivalHistory();
     }
+    renderTable();
+    renderHistory();
+    renderArrivalHistory();
+  }).catch((error) => {
+    console.error("Помилка при завантаженні даних з Firebase:", error);
   });
 }
 
-// Завантажити при старті
+// При завантаженні сторінки
 window.onload = () => {
-  toggleForm(false);
-  loadFromFirebase();
+  toggleForm(false); // сховати форму додавання
+  loadFromFirebase(); // завантажити дані з бази
 };
+</script>
+
 
 // Авторизація по паролю
 function checkPassword() {
