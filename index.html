@@ -72,6 +72,7 @@
 
 <button onclick="exportToExcel()">📤 Експорт складу</button>
 <button onclick="exportTechPark()">📤 Експорт техніки</button>
+<button onclick="logout()">🚪 Вийти</button>
 
 <table id="partsTable">
   <thead>
@@ -547,6 +548,13 @@ function exportToExcel() {
   XLSX.utils.book_append_sheet(wb, ws, "Склад");
   XLSX.writeFile(wb, "sklad.xlsx");
 }
+    function logout() {
+  if (confirm("Ви впевнені, що хочете вийти?")) {
+    localStorage.removeItem("authPassed"); // видалити прапорець авторизації
+    location.reload(); // перезавантажити сторінку, щоб знову показати вхід
+  }
+}
+
 </script>
 
 </body>
