@@ -273,10 +273,11 @@ if (quantity <= 0) {
   const installed = document.getElementById("installed").value;
   const supplier = document.getElementById("supplier").value.trim(); // 💡 возможно забыли это
 
-  if (!name || !catalog || isNaN(quantity) || !location) {
-    alert("Заповнити всі  поля");
-    return;
-  }
+ if (!name || !catalog || isNaN(quantity) || !location || !supplier) {
+  alert("Заповнти всі поля");
+  return;
+}
+
 
   const now = new Date();
   const arrival = now.toLocaleDateString("ru-RU");
