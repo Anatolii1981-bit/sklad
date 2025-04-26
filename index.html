@@ -46,7 +46,8 @@
 <button onclick="openTechManager()">Управління технікою</button>
 <button onclick="saveToJSON()">💾 Зберегти в JSON</button>
 <input type="file" id="jsonFileInput" style="display:none" onchange="loadFromJSON(event)">
-<button onclick="document.getElementById('jsonFileInput').click()">📂 Завантажити із JSON</button>
+<button onclick="askPinAndLoad()">📂 Завантажити із JSON</button>
+
 <button onclick="exportToExcel()">Экспорт склада</button>
 <button onclick="exportTechPark()">Экспорт техніки</button>
 
@@ -690,6 +691,14 @@ function checkPassword() {
     document.getElementById("authScreen").style.display = "none";
   } else {
     message.textContent = "В доступі відмовлено";
+  }
+}
+function askPinAndLoad() {
+  const pin = prompt("Введите PIN-код для загрузки:");
+  if (pin === "0918") {
+    document.getElementById('jsonFileInput').click();
+  } else {
+    alert("Неверный PIN-код!");
   }
 }
 
