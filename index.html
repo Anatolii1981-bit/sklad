@@ -235,18 +235,37 @@ function loadFromFirebase() {
     console.error("Помилка при завантаженні даних з Firebase:", error);
   });
 }
+<!-- Вікно авторизації -->
+<div id="authScreen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10000;">
+  <h2>Введіть пароль для входу</h2>
+  <input type="password" id="authInput" placeholder="Пароль">
+  <button onclick="checkPassword()">Увійти</button>
+  <p id="authMessage" style="color:red; margin-top:10px;"></p>
+</div>
 
-// При завантаженні сторінки
+<script>
+function checkPassword() {
+  const input = document.getElementById("authInput").value;
+  const message = document.getElementById("authMessage");
+
+  if (input === "1234") { // Правильний пароль
+    localStorage.setItem("authPassed", "true");
+    document.getElementById("authScreen").style.display = "none";
+  } else {
+    message.textContent = "В доступі відмовлено!";
+  }
+}
+
 window.onload = () => {
-  toggleForm(false); // сховати форму додавання
-  loadFromFirebase(); // завантажити склад з Firebase
+  toggleForm(false);
+  loadFromFirebase();
 
-  // Якщо вже авторизований — автоматично пустити
   if (localStorage.getItem("authPassed") === "true") {
     document.getElementById("authScreen").style.display = "none";
   }
 };
 </script>
+
 
 
 // Авторизація по паролю
