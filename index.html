@@ -238,20 +238,27 @@ function loadFromFirebase() {
 // При завантаженні сторінки
 window.onload = () => {
   toggleForm(false); // сховати форму додавання
-  loadFromFirebase(); // завантажити дані з бази
+  loadFromFirebase(); // завантажити склад з Firebase
+
+  // Якщо вже авторизований — автоматично пустити
+  if (localStorage.getItem("authPassed") === "true") {
+    document.getElementById("authScreen").style.display = "none";
+  }
 };
 </script>
 
 
 // Авторизація по паролю
+// Перевірка пароля при вході
 function checkPassword() {
   const input = document.getElementById("authInput").value;
   const message = document.getElementById("authMessage");
 
-  if (input === "1234") {
-    document.getElementById("authScreen").style.display = "none";
+  if (input === "1234") { // ← Твій пароль
+    localStorage.setItem("authPassed", "true"); // ✅ Зберігаємо в браузері
+    document.getElementById("authScreen").style.display = "none"; // Приховати екран авторизації
   } else {
-    message.textContent = "В доступі відмовлено";
+    message.textContent = "В доступі відмовлено!";
   }
 }
 
