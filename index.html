@@ -62,6 +62,8 @@
 <button onclick="askPinAndLoad()">📂 Завантажити з JSON</button>
 <button onclick="exportToExcel()">📤 Експорт складу</button>
 <button onclick="exportTechPark()">📤 Експорт техніки</button>
+ <button onclick="refreshData()">🔄 Оновити дані</button>
+ 
 <button onclick="logout()">🚪 Вийти</button>
 
 <table id="partsTable">
@@ -219,8 +221,16 @@ function logout() {
 
 // --- ЗБЕРЕЖЕННЯ ТА ЗАВАНТАЖЕННЯ ---
 function saveToFirebase() {
-  db.ref('warehouse').set({ partsData, techGroups, historyLog, arrivalLog });
+  db.ref('warehouse').set({ partsData, techGroups, historyLog, arrivalLog })
+    .then(() => {
+      console.log("Дані збережено ✅");
+      loadFromFirebase(); // після збереження одразу перезавантажити
+    })
+    .catch((error) => {
+      console.error("Помилка при збереженні: ", error);
+    });
 }
+
 
 function loadFromFirebase() {
   db.ref('warehouse').once('value').then(snapshot => {
@@ -481,6 +491,11 @@ function updateTechOptions() {
     });
   }
 }
+  function refreshData() {
+  loadFromFirebase();
+  alert("Дані успішно оновлені зі складу! ✅");
+}
+
 </script>
 
 </body>
