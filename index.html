@@ -400,12 +400,18 @@ function startInstall(index) {
 }
 
 function deleteRow(index) {
-  if (confirm("Видалити цей рядок?")) {
-    partsData.splice(index, 1);
-    saveToLocalStorage();
-    renderTable();
+  const pin = prompt("Введіть PIN-код для видалення:");
+  if (pin === "0918") {
+    if (confirm("Ви впевнені що хочите видалити цю строчку ?")) {
+      partsData.splice(index, 1);
+      saveToLocalStorage();
+      renderTable();
+    }
+  } else {
+    alert("Невірний PIN-код! Видалення заборонено.");
   }
 }
+
 
 function renderHistory(filterCatalog = null) {
   const tbody = document.getElementById("historyBody");
@@ -694,11 +700,11 @@ function checkPassword() {
   }
 }
 function askPinAndLoad() {
-  const pin = prompt("Введите PIN-код для загрузки:");
+  const pin = prompt("Введіть PIN-код для загрузки:");
   if (pin === "0918") {
     document.getElementById('jsonFileInput').click();
   } else {
-    alert("Неверный PIN-код!");
+    alert("Невірний PIN-код!");
   }
 }
 
