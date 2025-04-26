@@ -292,8 +292,17 @@ function saveEntry() {
 
   saveToFirebase();
   renderTable();
-  document.getElementById("formRow").reset();
+
+  // Очищаємо всі поля форми вручну
+  document.getElementById("name").value = "";
+  document.getElementById("catalog").value = "";
+  document.getElementById("quantity").value = "";
+  document.getElementById("location").value = "";
+  document.getElementById("supplier").value = "";
+  document.getElementById("installed").value = "";
+  document.getElementById("catalog").focus();
 }
+
 
 // Побудова таблиці
 function renderTable() {
