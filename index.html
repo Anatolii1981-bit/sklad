@@ -52,7 +52,8 @@
 </head>
 
 <body>
-<!-- Вхід -->
+
+<!-- Вікно авторизації -->
 <div id="authScreen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10000;">
   <h2>Введіть пароль для входу</h2>
   <input type="password" id="authInput" placeholder="Пароль">
@@ -64,12 +65,10 @@
 
 <input type="text" id="searchInput" placeholder="Пошук..." oninput="renderTable()">
 <button onclick="toggleForm()">Додати нову</button>
-
 <button onclick="openTechManager()">Управління технікою</button>
 <button onclick="saveToJSON()">💾 Зберегти в JSON</button>
 <input type="file" id="jsonFileInput" style="display:none" onchange="loadFromJSON(event)">
 <button onclick="askPinAndLoad()">📂 Завантажити з JSON</button>
-
 <button onclick="exportToExcel()">📤 Експорт складу</button>
 <button onclick="exportTechPark()">📤 Експорт техніки</button>
 <button onclick="logout()">🚪 Вийти</button>
@@ -90,7 +89,11 @@
   <tbody></tbody>
 </table>
 
-<!-- Форма додавання -->
+<!-- Сюди далі йде форма додавання, управління технікою, історія встановлень, історія надходжень -->
+
+<!-- Сюди далі йде правильний <script> з усіма функціями -->
+
+<!-- Форма додавання нової запчастини -->
 <div id="formRow" style="display:none;">
   <input id="catalog" placeholder="Каталожний номер">
   <input id="name" placeholder="Найменування">
@@ -101,7 +104,7 @@
   <button onclick="saveEntry()">Зберегти</button>
 </div>
 
-<!-- Встановлення -->
+<!-- Блок встановлення запчастини -->
 <div id="installRow" style="display:none;">
   <strong>Встановлення запчастини:</strong><br>
   <label>Кількість:</label>
@@ -123,7 +126,7 @@
   <button onclick="cancelInstall()">Відміна</button>
 </div>
 
-<!-- Модальне управління технікою -->
+<!-- Модальне вікно для управління технікою -->
 <div class="modal" id="techModal">
   <div class="modal-content">
     <h3>Управління технікою</h3>
@@ -142,7 +145,7 @@
   </div>
 </div>
 
-<!-- Історія встановлень -->
+<!-- Історія встановлення -->
 <h3>Історія встановлення</h3>
 <input type="text" id="historySearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderHistory()">
 <button onclick="toggleHistory()">📜 Показати/сховати історію встановлення</button>
@@ -192,10 +195,6 @@
   </thead>
   <tbody id="arrivalBody"></tbody>
 </table>
-
-<!-- СКРИПТИ -->
-
-<!-- (тут я окремо дороблю вставку всіх функцій) -->
 <script>
 // Дані
 let partsData = [];
@@ -208,17 +207,21 @@ let currentInstallIndex = null;
 let historyVisible = false;
 let arrivalVisible = false;
 
-// Зберігання даних у Firebase
+// ЗБЕРЕЖЕННЯ ДАНИХ У FIREBASE
 function saveToFirebase() {
   db.ref('warehouse').set({
     partsData: partsData,
     techGroups: techGroups,
     historyLog: historyLog,
     arrivalLog: arrivalLog
+  }).then(() => {
+    console.log("✅ Дані збережено у Firebase");
+  }).catch((error) => {
+    console.error("❌ Помилка збереження у Firebase:", error);
   });
 }
 
-// Завантаження даних з Firebase
+// ЗАВАНТАЖЕННЯ ДАНИХ ІЗ FIREBASE
 function loadFromFirebase() {
   db.ref('warehouse').once('value').then((snapshot) => {
     const data = snapshot.val();
@@ -231,24 +234,18 @@ function loadFromFirebase() {
     renderTable();
     renderHistory();
     renderArrivalHistory();
+    console.log("✅ Дані завантажено з Firebase");
   }).catch((error) => {
-    console.error("Помилка при завантаженні даних з Firebase:", error);
+    console.error("❌ Помилка завантаження з Firebase:", error);
   });
 }
-<!-- Вікно авторизації -->
-<div id="authScreen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10000;">
-  <h2>Введіть пароль для входу</h2>
-  <input type="password" id="authInput" placeholder="Пароль">
-  <button onclick="checkPassword()">Увійти</button>
-  <p id="authMessage" style="color:red; margin-top:10px;"></p>
-</div>
 
-<script>
+// ПЕРЕВІРКА ПАРОЛЯ
 function checkPassword() {
   const input = document.getElementById("authInput").value;
   const message = document.getElementById("authMessage");
 
-  if (input === "1234") { // Правильний пароль
+  if (input === "1234") { // ← твій пароль
     localStorage.setItem("authPassed", "true");
     document.getElementById("authScreen").style.display = "none";
   } else {
@@ -256,6 +253,7 @@ function checkPassword() {
   }
 }
 
+// АВТОМАТИЧНЕ ЗАВАНТАЖЕННЯ ПРИ СТАРТІ
 window.onload = () => {
   toggleForm(false);
   loadFromFirebase();
@@ -264,25 +262,16 @@ window.onload = () => {
     document.getElementById("authScreen").style.display = "none";
   }
 };
-</script>
 
-
-
-// Авторизація по паролю
-// Перевірка пароля при вході
-function checkPassword() {
-  const input = document.getElementById("authInput").value;
-  const message = document.getElementById("authMessage");
-
-  if (input === "1234") { // ← Твій пароль
-    localStorage.setItem("authPassed", "true"); // ✅ Зберігаємо в браузері
-    document.getElementById("authScreen").style.display = "none"; // Приховати екран авторизації
-  } else {
-    message.textContent = "В доступі відмовлено!";
+// КНОПКА ВИЙТИ
+function logout() {
+  if (confirm("Ви впевнені, що хочете вийти?")) {
+    localStorage.removeItem("authPassed");
+    location.reload();
   }
 }
 
-// Показати/сховати форму додавання
+// ПОКАЗАТИ/СХОВАТИ ФОРМУ
 function toggleForm(force = null) {
   const form = document.getElementById("formRow");
   if (!form) return;
@@ -294,8 +283,8 @@ function toggleForm(force = null) {
     form.style.display = (form.style.display === "none") ? "block" : "none";
   }
 }
-
-// Зберегти новий запис
+<script>
+// ЗБЕРЕЖЕННЯ НОВОГО ЗАПИСУ
 function saveEntry() {
   const name = document.getElementById("name").value.trim();
   const catalog = document.getElementById("catalog").value.trim();
@@ -330,9 +319,9 @@ function saveEntry() {
   saveToFirebase();
   renderTable();
 
-  // Очищаємо всі поля форми вручну
-  document.getElementById("name").value = "";
+  // Очищаємо форму
   document.getElementById("catalog").value = "";
+  document.getElementById("name").value = "";
   document.getElementById("quantity").value = "";
   document.getElementById("location").value = "";
   document.getElementById("supplier").value = "";
@@ -340,8 +329,7 @@ function saveEntry() {
   document.getElementById("catalog").focus();
 }
 
-
-// Побудова таблиці
+// ПОБУДОВА ТАБЛИЦІ
 function renderTable() {
   const tbody = document.querySelector("#partsTable tbody");
   tbody.innerHTML = "";
@@ -371,7 +359,7 @@ function renderTable() {
   });
 }
 
-// Почати встановлення
+// ПОЧАТИ ВСТАНОВЛЕННЯ ЗАПЧАСТИНИ
 function startInstall(index) {
   currentInstallIndex = index;
   document.getElementById("installQty").value = "";
@@ -381,7 +369,7 @@ function startInstall(index) {
   window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 
-// Підтвердити встановлення
+// ПІДТВЕРДИТИ ВСТАНОВЛЕННЯ
 function confirmInstall() {
   const qty = parseInt(document.getElementById("installQty").value);
   const group = document.getElementById("installGroup").value;
@@ -414,13 +402,13 @@ function confirmInstall() {
   cancelInstall();
 }
 
-// Скасувати встановлення
+// СКАСУВАТИ ВСТАНОВЛЕННЯ
 function cancelInstall() {
   currentInstallIndex = null;
   document.getElementById("installRow").style.display = "none";
 }
 
-// Видалити рядок
+// ВИДАЛИТИ ЗАПЧАСТИНУ
 function deleteRow(index) {
   const pin = prompt("Введіть PIN-код для видалення:");
   if (pin === "0918") {
@@ -433,19 +421,20 @@ function deleteRow(index) {
     alert("Невірний PIN-код!");
   }
 }
-
-// Відкрити управління технікою
+</script>
+<script>
+// ВІДКРИТИ УПРАВЛІННЯ ТЕХНІКОЮ
 function openTechManager() {
   document.getElementById("techModal").style.display = "flex";
   renderTechList();
 }
 
-// Закрити модальне вікно
+// ЗАКРИТИ МОДАЛЬНЕ ВІКНО
 function closeTechManager() {
   document.getElementById("techModal").style.display = "none";
 }
 
-// Побудова списку техніки
+// ПОБУДОВА СПИСКУ ТЕХНІКИ
 function renderTechList() {
   const group = document.getElementById("groupSelect").value;
   const list = techGroups[group] || [];
@@ -467,7 +456,7 @@ function renderTechList() {
   });
 }
 
-// Додати нову техніку
+// ДОДАТИ НОВУ ТЕХНІКУ
 function addTech() {
   const group = document.getElementById("groupSelect").value;
   const newTech = document.getElementById("newTech").value.trim();
@@ -479,7 +468,7 @@ function addTech() {
   renderTechList();
 }
 
-// Оновити вибір техніки
+// ОНОВИТИ ВИБІР ТЕХНІКИ
 function updateTechOptions() {
   const group = document.getElementById("installGroup").value;
   const select = document.getElementById("installTech");
@@ -495,21 +484,14 @@ function updateTechOptions() {
   }
 }
 
-// Показати історію встановлень
+// ПОКАЗАТИ/СХОВАТИ ІСТОРІЮ ВСТАНОВЛЕНЬ
 function toggleHistory() {
   historyVisible = !historyVisible;
   document.getElementById("historyTable").style.display = historyVisible ? "table" : "none";
   renderHistory();
 }
 
-// Показати історію надходжень
-function toggleArrivalHistory() {
-  arrivalVisible = !arrivalVisible;
-  document.getElementById("arrivalHistoryTable").style.display = arrivalVisible ? "table" : "none";
-  renderArrivalHistory();
-}
-
-// Побудова історії встановлень
+// ПОБУДОВА ІСТОРІЇ ВСТАНОВЛЕНЬ
 function renderHistory() {
   const tbody = document.getElementById("historyBody");
   tbody.innerHTML = "";
@@ -527,7 +509,14 @@ function renderHistory() {
   });
 }
 
-// Побудова історії надходжень
+// ПОКАЗАТИ/СХОВАТИ ІСТОРІЮ НАДХОДЖЕНЬ
+function toggleArrivalHistory() {
+  arrivalVisible = !arrivalVisible;
+  document.getElementById("arrivalHistoryTable").style.display = arrivalVisible ? "table" : "none";
+  renderArrivalHistory();
+}
+
+// ПОБУДОВА ІСТОРІЇ НАДХОДЖЕНЬ
 function renderArrivalHistory() {
   const tbody = document.getElementById("arrivalBody");
   tbody.innerHTML = "";
@@ -546,7 +535,7 @@ function renderArrivalHistory() {
   });
 }
 
-// Експорт складу в Excel
+// ЕКСПОРТ СКЛАДУ У EXCEL
 function exportToExcel() {
   const ws_data = [["№", "Каталожний номер", "Найменування", "Кількість", "Місце зберігання", "Дата надходження", "Дата встановлення"]];
   partsData.forEach((item, index) => {
@@ -567,17 +556,65 @@ function exportToExcel() {
   XLSX.utils.book_append_sheet(wb, ws, "Склад");
   XLSX.writeFile(wb, "sklad.xlsx");
 }
-    function logout() {
-  if (confirm("Ви впевнені, що хочете вийти?")) {
-    localStorage.removeItem("authPassed"); // видалити прапорець авторизації
-    location.reload(); // перезавантажити сторінку, щоб знову показати вхід
+
+// ЕКСПОРТ ТЕХПАРКУ У EXCEL
+function exportTechPark() {
+  const data = [["Група", "Техніка"]];
+  for (let group in techGroups) {
+    techGroups[group].forEach(tech => data.push([group, tech]));
   }
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, "Техніка");
+  XLSX.writeFile(wb, "techpark.xlsx");
 }
 
-</script>
+// ЗБЕРЕГТИ У JSON
+function saveToJSON() {
+  const backup = { partsData, techGroups, historyLog, arrivalLog };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'sklad_backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
-</body>
-</html>
+// ЗАВАНТАЖИТИ З JSON
+function loadFromJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const json = JSON.parse(e.target.result);
+      partsData = json.partsData || [];
+      techGroups = json.techGroups || {};
+      historyLog = json.historyLog || [];
+      arrivalLog = json.arrivalLog || [];
+      saveToFirebase();
+      renderTable();
+      renderHistory();
+      renderArrivalHistory();
+      alert("Дані успішно завантажені!");
+    } catch (err) {
+      alert("Помилка загрузки JSON: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ЗАПИТ PIN-КОДА ДЛЯ ЗАВАНТАЖЕННЯ JSON
+function askPinAndLoad() {
+  const pin = prompt("Введіть PIN-код для загрузки:");
+  if (pin === "0918") {
+    document.getElementById('jsonFileInput').click();
+  } else {
+    alert("Невірний PIN-код!");
+  }
+}
+</script>
 
 
 
