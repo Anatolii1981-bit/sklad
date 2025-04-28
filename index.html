@@ -290,30 +290,31 @@ async function saveEntry() {
   const arrival = now.toLocaleDateString("uk-UA");
   const entry = { name, catalog, quantity, location, installed, arrival, supplier };
 
-  if (editIndex !== null) {
-    partsData[editIndex] = entry;
-    editIndex = null;
+  // Додаємо або оновлюємо запчастину
+  const existing = partsData.find(p => p.catalog.toLowerCase() === catalog.toLowerCase());
+  if (existing) {
+    existing.quantity += quantity;
+    existing.arrival = arrival;
   } else {
-    const existing = partsData.find(p => p.catalog.toLowerCase() === catalog.toLowerCase());
-    if (existing) {
-      existing.quantity += quantity;
-      existing.arrival = arrival;
-    } else {
-      partsData.push(entry);
-    }
-    arrivalLog.push({ catalog, name, qty: quantity, date: arrival, location, supplier });
+    partsData.push(entry);
   }
+  arrivalLog.push({ catalog, name, qty: quantity, date: arrival, location, supplier });
 
   try {
-    await saveToFirebase();
-    await loadFromFirebase();
-    clearForm();
-    alert("Запчастину успішно збережено!");
+    await db.ref('warehouse').update({
+      partsData: partsData,
+      arrivalLog: arrivalLog
+    });
+
+    renderTable();
+    clearForm(); // ✨ Очищення форми після кожного додавання
+    document.getElementById("catalog").focus(); // ✨ Ставимо фокус назад на поле каталожного номера
   } catch (error) {
     console.error("Помилка збереження:", error);
     alert("Помилка збереження: " + error.message);
   }
 }
+
 
 // --- Побудова таблиці складу ---
 function renderTable() {
