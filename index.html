@@ -44,7 +44,7 @@
 </head>
 
 <body>
-<!-- Вікно авторизації -->
+<!-- Екран авторизації -->
 <div id="authScreen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10000;">
   <h2>Введіть пароль для входу</h2>
   <input type="password" id="authInput" placeholder="Пароль">
@@ -57,9 +57,6 @@
 <input type="text" id="searchInput" placeholder="Пошук..." oninput="renderTable()">
 <button onclick="toggleForm()">Додати нову</button>
 <button onclick="openTechManager()">Управління технікою</button>
-<button onclick="saveToJSON()">💾 Зберегти в JSON</button>
-<input type="file" id="jsonFileInput" style="display:none" onchange="loadFromJSON(event)">
-<button onclick="askPinAndLoad()">📂 Завантажити з JSON</button>
 <button onclick="exportToExcel()">📤 Експорт складу</button>
 <button onclick="exportTechPark()">📤 Експорт техніки</button>
 <button onclick="refreshData()">🔄 Оновити дані</button>
@@ -81,7 +78,7 @@
   <tbody></tbody>
 </table>
 
-<!-- Форма додавання нової запчастини -->
+<!-- Форма додавання запчастини -->
 <div id="formRow" style="display:none;">
   <input id="catalog" placeholder="Каталожний номер">
   <input id="name" placeholder="Найменування">
@@ -91,7 +88,7 @@
   <input type="date" id="installed" placeholder="Дата встановлення">
   <button onclick="saveEntry()">Зберегти</button>
 </div>
-<!-- Встановлення запчастини -->
+<!-- Блок встановлення запчастини -->
 <div id="installRow" style="display:none;">
   <strong>Встановлення запчастини:</strong><br>
   <label>Кількість:</label>
@@ -113,7 +110,7 @@
   <button onclick="cancelInstall()">Відміна</button>
 </div>
 
-<!-- Модальне управління технікою -->
+<!-- Модальне вікно управління технікою -->
 <div class="modal" id="techModal">
   <div class="modal-content">
     <h3>Управління технікою</h3>
@@ -131,7 +128,8 @@
     <button onclick="closeTechManager()">Закрити</button>
   </div>
 </div>
-<!-- Історія встановлень -->
+
+<!-- Блок історії встановлення -->
 <h3>Історія встановлення</h3>
 <input type="text" id="historySearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderHistory()">
 <button onclick="toggleHistory()">📜 Показати/сховати історію встановлення</button>
@@ -157,7 +155,7 @@
   <tbody id="historyBody"></tbody>
 </table>
 
-<!-- Історія надходжень -->
+<!-- Блок історії надходжень -->
 <h3>Історія надходжень</h3>
 <input type="text" id="arrivalSearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderArrivalHistory()">
 <button onclick="toggleArrivalHistory()">📥 Показати/сховати історію надходжень</button>
@@ -183,7 +181,7 @@
   </thead>
   <tbody id="arrivalBody"></tbody>
 </table>
-<!-- Логіка роботи складу -->
+<!-- Основна логіка роботи складу -->
 <script>
 // --- Змінні ---
 let partsData = [];
@@ -206,24 +204,25 @@ function checkPassword() {
   }
 }
 
-window.onload = () => {
-  if (localStorage.getItem("authPassed") === "true") {
-    document.getElementById("authScreen").style.display = "none";
-  }
-  loadFromFirebase();
-};
-
 function logout() {
   localStorage.removeItem("authPassed");
   location.reload();
 }
 
-// --- Збереження і завантаження у Firebase ---
-function saveToFirebase() {
+// --- Завантаження при старті ---
+window.onload = async () => {
+  if (localStorage.getItem("authPassed") === "true") {
+    document.getElementById("authScreen").style.display = "none";
+  }
+  await loadFromFirebase();
+};
+
+// --- Робота з Firebase ---
+async function saveToFirebase() {
   return db.ref('warehouse').set({ partsData, techGroups, historyLog, arrivalLog });
 }
 
-function loadFromFirebase() {
+async function loadFromFirebase() {
   return db.ref('warehouse').once('value').then(snapshot => {
     const data = snapshot.val();
     if (data) {
@@ -243,7 +242,7 @@ function refreshData() {
   alert("Дані успішно оновлені зі складу! ✅");
 }
 
-// --- Очищення форми ---
+// --- Очищення полів форми ---
 function clearForm() {
   document.getElementById("catalog").value = "";
   document.getElementById("name").value = "";
@@ -254,7 +253,7 @@ function clearForm() {
   document.getElementById("catalog").focus();
 }
 
-// --- Форма додавання ---
+// --- Перемикання форми додавання ---
 function toggleForm(force = null) {
   const form = document.getElementById("formRow");
   if (force === true) {
@@ -271,8 +270,9 @@ function toggleForm(force = null) {
     }
   }
 }
-
-// --- Додавання запчастини ---
+</script>
+<script>
+// --- Збереження нової запчастини ---
 async function saveEntry() {
   const name = document.getElementById("name").value.trim();
   const catalog = document.getElementById("catalog").value.trim();
@@ -306,17 +306,16 @@ async function saveEntry() {
 
   try {
     await saveToFirebase();
-    console.log("✅ Дані успішно збережено у Firebase!");
     await loadFromFirebase();
     clearForm();
-    alert("Запчастину збережено успішно!");
+    alert("Запчастину успішно збережено!");
   } catch (error) {
-    console.error("❌ Помилка збереження:", error);
+    console.error("Помилка збереження:", error);
     alert("Помилка збереження: " + error.message);
   }
 }
 
-// --- Таблиця складу ---
+// --- Побудова таблиці складу ---
 function renderTable() {
   const tbody = document.querySelector("#partsTable tbody");
   tbody.innerHTML = "";
@@ -324,7 +323,10 @@ function renderTable() {
 
   let counter = 1;
   partsData.forEach((item, index) => {
-    if (item.quantity > 0 && (item.name.toLowerCase().includes(filter) || item.catalog.toLowerCase().includes(filter) || item.location.toLowerCase().includes(filter))) {
+    if (item.quantity > 0 && 
+        (item.name.toLowerCase().includes(filter) || 
+         item.catalog.toLowerCase().includes(filter) || 
+         item.location.toLowerCase().includes(filter))) {
       const row = tbody.insertRow();
       row.insertCell(0).textContent = counter++;
       row.insertCell(1).textContent = item.catalog;
@@ -333,12 +335,15 @@ function renderTable() {
       row.insertCell(4).textContent = item.location;
       row.insertCell(5).textContent = item.arrival;
       row.insertCell(6).textContent = item.installed || "";
-      row.insertCell(7).innerHTML = `<span class="install-btn" onclick="startInstall(${index})">🛠</span> | <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>`;
+      row.insertCell(7).innerHTML = `
+        <span class="install-btn" onclick="startInstall(${index})">🛠</span> | 
+        <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>
+      `;
     }
   });
 }
 
-// --- Встановлення запчастини ---
+// --- Початок встановлення ---
 function startInstall(index) {
   currentInstallIndex = index;
   document.getElementById("installQty").value = "";
@@ -348,7 +353,8 @@ function startInstall(index) {
   window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 
-function confirmInstall() {
+// --- Підтвердження встановлення ---
+async function confirmInstall() {
   const qty = parseInt(document.getElementById("installQty").value);
   const group = document.getElementById("installGroup").value;
   const tech = document.getElementById("installTech").value;
@@ -366,20 +372,33 @@ function confirmInstall() {
 
   part.quantity -= qty;
   part.installed = new Date().toISOString().split("T")[0];
-  historyLog.push({ catalog: part.catalog, name: part.name, qty, date: part.installed, tech: `${group} — ${tech}` });
+  historyLog.push({
+    catalog: part.catalog,
+    name: part.name,
+    qty,
+    date: part.installed,
+    tech: `${group} — ${tech}`
+  });
 
-  saveToFirebase();
-  renderTable();
-  renderHistory();
-  cancelInstall();
+  try {
+    await saveToFirebase();
+    await loadFromFirebase();
+    cancelInstall();
+    alert("Встановлення успішно проведено!");
+  } catch (error) {
+    console.error("Помилка встановлення:", error);
+    alert("Помилка встановлення: " + error.message);
+  }
 }
 
+// --- Скасування встановлення ---
 function cancelInstall() {
   currentInstallIndex = null;
   document.getElementById("installRow").style.display = "none";
 }
-
-// --- Робота з технікою ---
+</script>
+<script>
+// --- Управління технікою ---
 function openTechManager() {
   document.getElementById("techModal").style.display = "flex";
   renderTechList();
@@ -400,9 +419,9 @@ function renderTechList() {
     li.textContent = tech + " ";
     const del = document.createElement("button");
     del.textContent = "Видалити";
-    del.onclick = () => {
+    del.onclick = async () => {
       techGroups[group].splice(i, 1);
-      saveToFirebase();
+      await saveToFirebase();
       renderTechList();
     };
     li.appendChild(del);
@@ -410,14 +429,14 @@ function renderTechList() {
   });
 }
 
-function addTech() {
+async function addTech() {
   const group = document.getElementById("groupSelect").value;
   const newTech = document.getElementById("newTech").value.trim();
   if (!newTech) return;
   techGroups[group] = techGroups[group] || [];
   techGroups[group].push(newTech);
   document.getElementById("newTech").value = "";
-  saveToFirebase();
+  await saveToFirebase();
   renderTechList();
 }
 
@@ -435,31 +454,21 @@ function updateTechOptions() {
   }
 }
 
-// --- Історії ---
+// --- Історія встановлення ---
 function renderHistory() {
   const tbody = document.getElementById("historyBody");
   tbody.innerHTML = "";
-  historyLog.forEach(entry => {
-    const row = tbody.insertRow();
-    row.insertCell(0).textContent = entry.catalog;
-    row.insertCell(1).textContent = entry.name;
-    row.insertCell(2).textContent = entry.qty;
-    row.insertCell(3).textContent = entry.date;
-    row.insertCell(4).textContent = entry.tech;
-  });
-}
+  const filter = document.getElementById("historySearchInput").value.toLowerCase();
 
-function renderArrivalHistory() {
-  const tbody = document.getElementById("arrivalBody");
-  tbody.innerHTML = "";
-  arrivalLog.forEach(entry => {
-    const row = tbody.insertRow();
-    row.insertCell(0).textContent = entry.catalog;
-    row.insertCell(1).textContent = entry.name;
-    row.insertCell(2).textContent = entry.qty;
-    row.insertCell(3).textContent = entry.date;
-    row.insertCell(4).textContent = entry.location;
-    row.insertCell(5).textContent = entry.supplier;
+  historyLog.forEach(entry => {
+    if (!filter || entry.catalog.toLowerCase().includes(filter) || entry.name.toLowerCase().includes(filter)) {
+      const row = tbody.insertRow();
+      row.insertCell(0).textContent = entry.catalog;
+      row.insertCell(1).textContent = entry.name;
+      row.insertCell(2).textContent = entry.qty;
+      row.insertCell(3).textContent = entry.date;
+      row.insertCell(4).textContent = entry.tech;
+    }
   });
 }
 
@@ -468,12 +477,31 @@ function toggleHistory() {
   document.getElementById("historyTable").style.display = historyVisible ? "table" : "none";
 }
 
+// --- Історія надходжень ---
+function renderArrivalHistory() {
+  const tbody = document.getElementById("arrivalBody");
+  tbody.innerHTML = "";
+  const filter = document.getElementById("arrivalSearchInput").value.toLowerCase();
+
+  arrivalLog.forEach(entry => {
+    if (!filter || entry.catalog.toLowerCase().includes(filter) || entry.name.toLowerCase().includes(filter)) {
+      const row = tbody.insertRow();
+      row.insertCell(0).textContent = entry.catalog;
+      row.insertCell(1).textContent = entry.name;
+      row.insertCell(2).textContent = entry.qty;
+      row.insertCell(3).textContent = entry.date;
+      row.insertCell(4).textContent = entry.location;
+      row.insertCell(5).textContent = entry.supplier;
+    }
+  });
+}
+
 function toggleArrivalHistory() {
   arrivalVisible = !arrivalVisible;
   document.getElementById("arrivalHistoryTable").style.display = arrivalVisible ? "table" : "none";
 }
 
-// --- Експорт ---
+// --- Експорт даних ---
 function exportToExcel() {
   const ws_data = [["№", "Каталожний номер", "Найменування", "Кількість", "Місце зберігання", "Дата надходження", "Дата встановлення"]];
   partsData.forEach((item, index) => {
