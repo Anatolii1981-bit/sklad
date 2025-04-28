@@ -21,7 +21,7 @@
     const db = firebase.database();
   </script>
 
-  <!-- Підключення бібліотеки XLSX для експорту в Excel -->
+  <!-- Підключення XLSX для експорту -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
@@ -62,8 +62,7 @@
 <button onclick="askPinAndLoad()">📂 Завантажити з JSON</button>
 <button onclick="exportToExcel()">📤 Експорт складу</button>
 <button onclick="exportTechPark()">📤 Експорт техніки</button>
- <button onclick="refreshData()">🔄 Оновити дані</button>
- 
+<button onclick="refreshData()">🔄 Оновити дані</button>
 <button onclick="logout()">🚪 Вийти</button>
 
 <table id="partsTable">
@@ -184,9 +183,9 @@
   </thead>
   <tbody id="arrivalBody"></tbody>
 </table>
-<!-- Увесь скрипт для роботи складу -->
+<!-- Логіка роботи складу -->
 <script>
-// --- ПЕРЕМІННІ ---
+// --- Змінні ---
 let partsData = [];
 let techGroups = {};
 let historyLog = [];
@@ -196,7 +195,7 @@ let currentInstallIndex = null;
 let historyVisible = false;
 let arrivalVisible = false;
 
-// --- АВТОРИЗАЦІЯ ---
+// --- Авторизація ---
 function checkPassword() {
   const input = document.getElementById("authInput").value;
   if (input === "1234") {
@@ -219,18 +218,16 @@ function logout() {
   location.reload();
 }
 
-// --- ЗБЕРЕЖЕННЯ ТА ЗАВАНТАЖЕННЯ ---
+// --- Завантаження і збереження у Firebase ---
 function saveToFirebase() {
   db.ref('warehouse').set({ partsData, techGroups, historyLog, arrivalLog })
     .then(() => {
-      console.log("Дані збережено ✅");
-      loadFromFirebase(); // після збереження одразу перезавантажити
+      console.log("Дані збережені ✅");
     })
     .catch((error) => {
-      console.error("Помилка при збереженні: ", error);
+      console.error("Помилка при збереженні:", error);
     });
 }
-
 
 function loadFromFirebase() {
   db.ref('warehouse').once('value').then(snapshot => {
@@ -247,12 +244,41 @@ function loadFromFirebase() {
   });
 }
 
-// --- ФОРМА ---
-function toggleForm(force = null) {
-  const form = document.getElementById("formRow");
-  form.style.display = (force !== null) ? (force ? "block" : "none") : (form.style.display === "none" ? "block" : "none");
+function refreshData() {
+  loadFromFirebase();
+  alert("Дані успішно оновлені зі складу! ✅");
 }
 
+// --- Очищення форми ---
+function clearForm() {
+  document.getElementById("catalog").value = "";
+  document.getElementById("name").value = "";
+  document.getElementById("quantity").value = "";
+  document.getElementById("location").value = "";
+  document.getElementById("supplier").value = "";
+  document.getElementById("installed").value = "";
+  document.getElementById("catalog").focus();
+}
+
+// --- Форма додавання ---
+function toggleForm(force = null) {
+  const form = document.getElementById("formRow");
+  if (force === true) {
+    form.style.display = "block";
+    clearForm();
+  } else if (force === false) {
+    form.style.display = "none";
+  } else {
+    if (form.style.display === "none") {
+      form.style.display = "block";
+      clearForm();
+    } else {
+      form.style.display = "none";
+    }
+  }
+}
+
+// --- Додавання запчастини ---
 function saveEntry() {
   const name = document.getElementById("name").value.trim();
   const catalog = document.getElementById("catalog").value.trim();
@@ -284,47 +310,16 @@ function saveEntry() {
     arrivalLog.push({ catalog, name, qty: quantity, date: arrival, location, supplier });
   }
 
-  // Оновлюємо базу та перерисовуємо таблицю
-  db.ref('warehouse').set({ partsData, techGroups, historyLog, arrivalLog })
-    .then(() => {
-      console.log("Дані збережені в Firebase ✅");
-      renderTable();          // Перемалювати таблицю
-      renderHistory();        // Перемалювати історію встановлень
-      renderArrivalHistory(); // Перемалювати історію надходжень
-      clearForm();            // Очистити форму
-      alert("Запчастину успішно збережено! ✅");
-    })
-    .catch((error) => {
-      console.error("Помилка при збереженні:", error);
-      alert("Помилка збереження: " + error.message);
-    });
-}
-
-
-// --- ТАБЛИЦЯ ЗАПЧАСТИН ---
-function renderTable() {
-  const tbody = document.querySelector("#partsTable tbody");
-  tbody.innerHTML = "";
-  const filter = document.getElementById("searchInput").value.toLowerCase();
-
-  let counter = 1;
-  partsData.forEach((item, index) => {
-    if (item.quantity > 0 && (item.name.toLowerCase().includes(filter) || item.catalog.toLowerCase().includes(filter) || item.location.toLowerCase().includes(filter))) {
-      const row = tbody.insertRow();
-      row.insertCell(0).textContent = counter++;
-      row.insertCell(1).textContent = item.catalog;
-      row.insertCell(2).textContent = item.name;
-      row.insertCell(3).textContent = item.quantity;
-      row.insertCell(4).textContent = item.location;
-      row.insertCell(5).textContent = item.arrival;
-      row.insertCell(6).textContent = item.installed || "";
-      row.insertCell(7).innerHTML = `<span class="install-btn" onclick="startInstall(${index})">🛠</span> | <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>`;
-    }
-  });
+  saveToFirebase();
+  renderTable();
+  renderHistory();
+  renderArrivalHistory();
+  clearForm();
+  alert("Запчастину успішно збережено! ✅");
 }
 </script>
 <script>
-// --- ВСТАНОВЛЕННЯ ЗАПЧАСТИН ---
+// --- Встановлення запчастини ---
 function startInstall(index) {
   currentInstallIndex = index;
   document.getElementById("installQty").value = "";
@@ -365,85 +360,7 @@ function cancelInstall() {
   document.getElementById("installRow").style.display = "none";
 }
 
-// --- ІСТОРІЯ ВСТАНОВЛЕНЬ ---
-function renderHistory() {
-  const tbody = document.getElementById("historyBody");
-  if (!tbody) return;
-  tbody.innerHTML = "";
-  historyLog.forEach(entry => {
-    const row = tbody.insertRow();
-    row.insertCell(0).textContent = entry.catalog;
-    row.insertCell(1).textContent = entry.name;
-    row.insertCell(2).textContent = entry.qty;
-    row.insertCell(3).textContent = entry.date;
-    row.insertCell(4).textContent = entry.tech;
-  });
-}
-
-// --- ІСТОРІЯ НАДХОДЖЕНЬ ---
-function renderArrivalHistory() {
-  const tbody = document.getElementById("arrivalBody");
-  if (!tbody) return;
-  tbody.innerHTML = "";
-  arrivalLog.forEach(entry => {
-    const row = tbody.insertRow();
-    row.insertCell(0).textContent = entry.catalog;
-    row.insertCell(1).textContent = entry.name;
-    row.insertCell(2).textContent = entry.qty;
-    row.insertCell(3).textContent = entry.date;
-    row.insertCell(4).textContent = entry.location;
-    row.insertCell(5).textContent = entry.supplier;
-  });
-}
-
-// --- ЕКСПОРТ СКЛАДУ В EXCEL ---
-function exportToExcel() {
-  const ws_data = [["№", "Каталожний номер", "Найменування", "Кількість", "Місце зберігання", "Дата надходження", "Дата встановлення"]];
-  partsData.forEach((item, index) => {
-    if (item.quantity > 0) {
-      ws_data.push([
-        index + 1,
-        item.catalog,
-        item.name,
-        item.quantity,
-        item.location,
-        item.arrival,
-        item.installed || ""
-      ]);
-    }
-  });
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(ws_data);
-  XLSX.utils.book_append_sheet(wb, ws, "Склад");
-  XLSX.writeFile(wb, "sklad.xlsx");
-}
-
-// --- ЕКСПОРТ ТЕХНІКИ В EXCEL ---
-function exportTechPark() {
-  const data = [["Група", "Техніка"]];
-  for (let group in techGroups) {
-    techGroups[group].forEach(tech => data.push([group, tech]));
-  }
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  XLSX.utils.book_append_sheet(wb, ws, "Техніка");
-  XLSX.writeFile(wb, "techpark.xlsx");
-}
-
-// --- ДОДАТКОВІ КНОПКИ ---
-function toggleHistory() {
-  historyVisible = !historyVisible;
-  document.getElementById("historyTable").style.display = historyVisible ? "table" : "none";
-  renderHistory();
-}
-
-function toggleArrivalHistory() {
-  arrivalVisible = !arrivalVisible;
-  document.getElementById("arrivalHistoryTable").style.display = arrivalVisible ? "table" : "none";
-  renderArrivalHistory();
-}
-
-// --- ТЕХНІКА --- 
+// --- Робота з технікою ---
 function openTechManager() {
   document.getElementById("techModal").style.display = "flex";
   renderTechList();
@@ -458,6 +375,7 @@ function renderTechList() {
   const list = techGroups[group] || [];
   const ul = document.getElementById("techList");
   ul.innerHTML = "";
+
   list.forEach((tech, i) => {
     const li = document.createElement("li");
     li.textContent = tech + " ";
@@ -497,13 +415,80 @@ function updateTechOptions() {
     });
   }
 }
-  function refreshData() {
-  loadFromFirebase();
-  alert("Дані успішно оновлені зі складу! ✅");
+
+// --- Історії ---
+function renderHistory() {
+  const tbody = document.getElementById("historyBody");
+  tbody.innerHTML = "";
+  historyLog.forEach(entry => {
+    const row = tbody.insertRow();
+    row.insertCell(0).textContent = entry.catalog;
+    row.insertCell(1).textContent = entry.name;
+    row.insertCell(2).textContent = entry.qty;
+    row.insertCell(3).textContent = entry.date;
+    row.insertCell(4).textContent = entry.tech;
+  });
 }
 
+function renderArrivalHistory() {
+  const tbody = document.getElementById("arrivalBody");
+  tbody.innerHTML = "";
+  arrivalLog.forEach(entry => {
+    const row = tbody.insertRow();
+    row.insertCell(0).textContent = entry.catalog;
+    row.insertCell(1).textContent = entry.name;
+    row.insertCell(2).textContent = entry.qty;
+    row.insertCell(3).textContent = entry.date;
+    row.insertCell(4).textContent = entry.location;
+    row.insertCell(5).textContent = entry.supplier;
+  });
+}
+
+function toggleHistory() {
+  historyVisible = !historyVisible;
+  document.getElementById("historyTable").style.display = historyVisible ? "table" : "none";
+}
+
+function toggleArrivalHistory() {
+  arrivalVisible = !arrivalVisible;
+  document.getElementById("arrivalHistoryTable").style.display = arrivalVisible ? "table" : "none";
+}
+
+// --- Експорт ---
+function exportToExcel() {
+  const ws_data = [["№", "Каталожний номер", "Найменування", "Кількість", "Місце зберігання", "Дата надходження", "Дата встановлення"]];
+  partsData.forEach((item, index) => {
+    if (item.quantity > 0) {
+      ws_data.push([
+        index + 1,
+        item.catalog,
+        item.name,
+        item.quantity,
+        item.location,
+        item.arrival,
+        item.installed || ""
+      ]);
+    }
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+  XLSX.utils.book_append_sheet(wb, ws, "Склад");
+  XLSX.writeFile(wb, "sklad.xlsx");
+}
+
+function exportTechPark() {
+  const data = [["Група", "Техніка"]];
+  for (let group in techGroups) {
+    techGroups[group].forEach(tech => data.push([group, tech]));
+  }
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  XLSX.utils.book_append_sheet(wb, ws, "Техніка");
+  XLSX.writeFile(wb, "techpark.xlsx");
+}
 </script>
 
 </body>
 </html>
+
 
