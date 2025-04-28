@@ -279,7 +279,8 @@ function toggleForm(force = null) {
 }
 
 // --- Додавання запчастини ---
-function saveEntry() {
+
+  async function saveEntry() {
   const name = document.getElementById("name").value.trim();
   const catalog = document.getElementById("catalog").value.trim();
   const quantity = parseInt(document.getElementById("quantity").value.trim());
@@ -310,13 +311,23 @@ function saveEntry() {
     arrivalLog.push({ catalog, name, qty: quantity, date: arrival, location, supplier });
   }
 
-  saveToFirebase();
-  renderTable();
-  renderHistory();
-  renderArrivalHistory();
-  clearForm();
-  alert("Запчастину успішно збережено! ✅");
+  try {
+    await db.ref('warehouse').set({ partsData, techGroups, historyLog, arrivalLog });
+    console.log("✅ Дані успішно збережено у Firebase!");
+    
+    await loadFromFirebase(); // Свіже завантаження після запису
+    renderTable();
+    renderHistory();
+    renderArrivalHistory();
+    
+    clearForm();
+    alert("Запчастину збережено успішно!");
+  } catch (error) {
+    console.error("❌ Помилка збереження:", error);
+    alert("Помилка збереження: " + error.message);
+  }
 }
+
 </script>
 <script>
 // --- Встановлення запчастини ---
