@@ -303,7 +303,6 @@ async function saveEntry() {
       arrivalLog: arrivalLog
     });
 
-    console.log("✅ Дані збережено успішно.");
     renderTable();
     clearForm();
     alert("Запчастину збережено!");
@@ -312,6 +311,7 @@ async function saveEntry() {
     alert("Помилка при збереженні: " + error.message);
   }
 }
+</script>
 
 
 // --- Побудова таблиці складу ---
@@ -539,7 +539,7 @@ function exportTechPark() {
   XLSX.writeFile(wb, "techpark.xlsx");
 }
 </script>
-
+</script>
 </body>
 </html>
 
