@@ -270,47 +270,49 @@ function toggleForm(force = null) {
 </script>
 <script>
 // --- Збереження нової запчастини з мультидодаванням ---
+<script>
 async function saveEntry() {
-  const name = document.getElementById("name").value.trim();
-  const catalog = document.getElementById("catalog").value.trim();
-  const quantity = parseInt(document.getElementById("quantity").value.trim());
-  const location = document.getElementById("location").value.trim();
-  const supplier = document.getElementById("supplier").value.trim();
-  const installed = document.getElementById("installed").value;
-
-  if (!name || !catalog || isNaN(quantity) || quantity <= 0 || !location || !supplier) {
-    alert("Заповніть всі поля правильно!");
-    return;
-  }
-
-  const now = new Date();
-  const arrival = now.toLocaleDateString("uk-UA");
-  const entry = { name, catalog, quantity, location, installed, arrival, supplier };
-
-  // Додаємо або оновлюємо запчастину
-  const existing = partsData.find(p => p.catalog.toLowerCase() === catalog.toLowerCase());
-  if (existing) {
-    existing.quantity += quantity;
-    existing.arrival = arrival;
-  } else {
-    partsData.push(entry);
-  }
-  arrivalLog.push({ catalog, name, qty: quantity, date: arrival, location, supplier });
-
   try {
+    const name = document.getElementById("name").value.trim();
+    const catalog = document.getElementById("catalog").value.trim();
+    const quantity = parseInt(document.getElementById("quantity").value.trim());
+    const location = document.getElementById("location").value.trim();
+    const supplier = document.getElementById("supplier").value.trim();
+    const installed = document.getElementById("installed").value;
+
+    if (!name || !catalog || isNaN(quantity) || quantity <= 0 || !location || !supplier) {
+      alert("Заповніть всі поля правильно!");
+      return;
+    }
+
+    const now = new Date();
+    const arrival = now.toLocaleDateString("uk-UA");
+    const entry = { name, catalog, quantity, location, installed, arrival, supplier };
+
+    const existing = partsData.find(p => p.catalog.toLowerCase() === catalog.toLowerCase());
+    if (existing) {
+      existing.quantity += quantity;
+      existing.arrival = arrival;
+    } else {
+      partsData.push(entry);
+    }
+    arrivalLog.push({ catalog, name, qty: quantity, date: arrival, location, supplier });
+
     await db.ref('warehouse').update({
       partsData: partsData,
       arrivalLog: arrivalLog
     });
 
+    console.log("✅ Дані збережено успішно.");
     renderTable();
-    clearForm(); // Очищення форми
-    document.getElementById("catalog").focus(); // Фокус на каталог
+    clearForm();
+    alert("Запчастину збережено!");
   } catch (error) {
-    console.error("Помилка збереження:", error);
-    alert("Помилка збереження: " + error.message);
+    console.error("❌ Помилка при збереженні:", error);
+    alert("Помилка при збереженні: " + error.message);
   }
 }
+
 
 // --- Побудова таблиці складу ---
 function renderTable() {
