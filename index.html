@@ -124,6 +124,8 @@
   <label>По:</label>
   <input type="date" id="installTo">
   <button onclick="exportFilteredInstallations()">📤 Експорт встановлень по даті</button>
+  <button onclick="clearInstallHistory()">🧹 Очистити історію встановлення</button>
+
 </div>
 <table id="historyTable" style="display:none;">
   <thead>
@@ -148,6 +150,8 @@
   <label>По:</label>
   <input type="date" id="arrivalTo">
   <button onclick="exportFilteredArrivals()">📤 Експорт надходжень по даті</button>
+  <button onclick="clearArrivalHistory()">🧹 Очистити історію надходжень</button>
+
 </div>
 <table id="arrivalHistoryTable" style="display:none;">
   <thead>
@@ -580,6 +584,24 @@ function exportFilteredArrivals() {
   XLSX.utils.book_append_sheet(workbook, worksheet, "Надходження");
   XLSX.writeFile(workbook, "надходження_по_даті.xlsx");
 }
+  // --- Очистити історію встановлення ---
+async function clearInstallHistory() {
+  if (!confirm("Ви впевнені, що хочете повністю очистити історію встановлення?")) return;
+  historyLog = [];
+  await saveToFirebase();
+  renderHistory();
+  alert("Історію встановлення очищено! ✅");
+}
+
+// --- Очистити історію надходжень ---
+async function clearArrivalHistory() {
+  if (!confirm("Ви впевнені, що хочете повністю очистити історію надходжень?")) return;
+  arrivalLog = [];
+  await saveToFirebase();
+  renderArrivalHistory();
+  alert("Історію надходжень очищено! ✅");
+}
+
 </script>
 </body>
 </html>
