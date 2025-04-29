@@ -611,6 +611,51 @@ async function clearArrivalHistory() {
   renderArrivalHistory();
   alert("Історію надходжень очищено! ✅");
 }
+// --- Функція перевірки PIN-коду ---
+function verifyPin() {
+  const pin = prompt("Введіть PIN-код:");
+  return pin === "0918";
+}
+
+// --- Очистити історію встановлення з PIN ---
+async function clearInstallHistory() {
+  if (!verifyPin()) {
+    alert("Невірний PIN-код!");
+    return;
+  }
+  if (!confirm("Ви впевнені, що хочете повністю очистити історію встановлення?")) return;
+  historyLog = [];
+  await saveToFirebase();
+  renderHistory();
+  alert("Історію встановлення очищено! ✅");
+}
+
+// --- Очистити історію надходжень з PIN ---
+async function clearArrivalHistory() {
+  if (!verifyPin()) {
+    alert("Невірний PIN-код!");
+    return;
+  }
+  if (!confirm("Ви впевнені, що хочете повністю очистити історію надходжень?")) return;
+  arrivalLog = [];
+  await saveToFirebase();
+  renderArrivalHistory();
+  alert("Історію надходжень очищено! ✅");
+}
+
+// --- Видалити запчастину з PIN ---
+async function deleteRow(index) {
+  if (!verifyPin()) {
+    alert("Невірний PIN-код!");
+    return;
+  }
+  const item = partsData[index];
+  if (!confirm(`Ви впевнені, що хочете видалити запчастину: ${item.name}?`)) return;
+  partsData.splice(index, 1);
+  await saveToFirebase();
+  renderTable();
+  alert("Запчастину видалено! ✅");
+}
 
 </script>
 </body>
