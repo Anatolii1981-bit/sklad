@@ -548,11 +548,22 @@ function renderArrivalHistory() {
 }
 // --- Експорт складу у Excel ---
 function exportToExcel() {
-  const worksheet = XLSX.utils.json_to_sheet(partsData);
+  const exportData = partsData.map(p => ({
+    "Каталожний номер": p.catalog,
+    "Найменування": p.name,
+    "Кількість": p.quantity,
+    "Місце зберігання": p.location,
+    "Дата надходження": p.arrival,
+    "Дата встановлення": p.installed || "",
+    "Постачальник": p.supplier
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Склад");
   XLSX.writeFile(workbook, "склад.xlsx");
 }
+
 
 // --- Експорт парку техніки у Excel ---
 function exportTechPark() {
@@ -582,11 +593,20 @@ function exportFilteredInstallations() {
     return entryDate >= from && entryDate <= to;
   });
 
-  const worksheet = XLSX.utils.json_to_sheet(filtered);
+  const exportData = filtered.map(e => ({
+    "Каталожний номер": e.catalog,
+    "Найменування": e.name,
+    "Кількість": e.qty,
+    "Дата встановлення": e.date,
+    "Техніка": e.tech
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Встановлення");
   XLSX.writeFile(workbook, "встановлення_по_даті.xlsx");
 }
+
 
 // --- Експорт надходжень по діапазону дат ---
 function exportFilteredArrivals() {
@@ -602,11 +622,21 @@ function exportFilteredArrivals() {
     return entryDate >= from && entryDate <= to;
   });
 
-  const worksheet = XLSX.utils.json_to_sheet(filtered);
+  const exportData = filtered.map(e => ({
+    "Каталожний номер": e.catalog,
+    "Найменування": e.name,
+    "Кількість": e.qty,
+    "Дата надходження": e.date,
+    "Місце зберігання": e.location,
+    "Постачальник": e.supplier
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Надходження");
   XLSX.writeFile(workbook, "надходження_по_даті.xlsx");
 }
+
   // --- Очистити історію встановлення ---
 async function clearInstallHistory() {
   if (!confirm("Ви впевнені, що хочете повністю очистити історію встановлення?")) return;
