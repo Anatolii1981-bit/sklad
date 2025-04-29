@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Склад зберігання запчастин</title>
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f0f0f0; }
+    input, button, select { padding: 6px; margin: 5px 5px 5px 0; }
+    .edit-btn, .delete-btn, .install-btn, .history-btn { cursor: pointer; color: blue; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+    .modal-content { background: white; padding: 20px; border-radius: 5px; min-width: 300px; }
+    #installRow, #formRow { display: none; padding: 10px; border: 1px solid #ccc; margin-bottom: 20px; background: #f9f9f9; }
+    #historyTable, #arrivalHistoryTable { margin-top: 30px; }
+  </style>
+</head>
+<body>
+<div id="authScreen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10000;">
+  <h2>Введіть пароль для входу</h2>
+  <input type="password" id="authInput" placeholder="Пароль">
+  <button onclick="checkPassword()">Увійти</button>
+  <p id="authMessage" style="color:red; margin-top:10px;"></p>
+</div>
+
+<h2>Склад зберігання запчастин</h2>
+<input type="text" id="searchInput" placeholder="Пошук..." oninput="renderTable()">
+<button onclick="toggleForm()">Додати нову</button>
+<button onclick="openTechManager()">Управління технікою</button>
+<button onclick="exportToExcel()">📤 Експорт складу</button>
+<button onclick="exportTechPark()">📤 Експорт техніки</button>
+<button onclick="refreshData()">🔄 Оновити дані</button>
+<button onclick="logout()">🚪 Вийти</button>
+
+<table id="partsTable"><thead><tr>
+  <th>№</th><th>Каталожний номер</th><th>Найменування</th><th>Кількість</th><th>Місце зберігання</th><th>Дата надходження</th><th>Дата встановлення</th><th>Дії</th>
+</tr></thead><tbody></tbody></table>
+
+<div id="formRow"><input id="catalog" placeholder="Каталожний номер"><input id="name" placeholder="Найменування">
+<input type="number" id="quantity" placeholder="Кількість"><input id="location" placeholder="Місце зберігання">
+<input id="supplier" placeholder="Постачальник"><input type="date" id="installed" placeholder="Дата встановлення">
+<button onclick="saveEntry()">Зберегти</button></div>
+
+<div id="installRow"><strong>Встановлення запчастини:</strong><br>
+<label>Кількість:</label><input type="number" id="installQty" placeholder="Скільки встановити?">
+<label>Група техніки:</label><select id="installGroup" onchange="updateTechOptions()">
+<option value="">-- виберіть групу --</option><option>Трактор</option><option>Комбайн</option><option>Оприскувач</option><option>Сівалка</option><option>Інше</option></select>
+<label>Техніка:</label><select id="installTech"><option value="">-- виберіть техніку --</option></select>
+<button onclick="confirmInstall()">Підтвердити встановлення</button><button onclick="cancelInstall()">Відміна</button></div>
+
+<div class="modal" id="techModal"><div class="modal-content"><h3>Управління технікою</h3>
+<select id="groupSelect" onchange="renderTechList()"><option>Трактор</option><option>Комбайн</option><option>Оприскувач</option><option>Сівалка</option><option>Інше</option></select>
+<ul id="techList"></ul><input id="newTech" placeholder="Нова техніка"><button onclick="addTech()">Додати</button>
+<button onclick="closeTechManager()">Закрити</button></div></div>
+
+<h3>Історія встановлення</h3><input id="historySearchInput" placeholder="Пошук..." oninput="renderHistory()">
+<button onclick="toggleHistory()">📜 Показати/сховати історію</button>
+<table id="historyTable" style="display:none;"><thead><tr><th>Каталожний номер</th><th>Найменування</th><th>Кількість</th><th>Дата встановлення</th><th>Техніка</th></tr></thead><tbody id="historyBody"></tbody></table>
+
+<h3>Історія надходжень</h3><input id="arrivalSearchInput" placeholder="Пошук..." oninput="renderArrivalHistory()">
+<button onclick="toggleArrivalHistory()">📥 Показати/сховати історію</button>
+<table id="arrivalHistoryTable" style="display:none;"><thead><tr><th>Каталожний номер</th><th>Найменування</th><th>Кількість</th><th>Дата надходження</th><th>Місце зберігання</th><th>Постачальник</th></tr></thead><tbody id="arrivalBody"></tbody></table>
+
+<script src="https://cdn.jsdelivr.net/gh/Anatolii1981-bit/sklad@main/sklad-logic.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDcUKoOroCPgK2tg_zBv9WIji2VYsUTCZU",
+    authDomain: "sklad-c6daf.firebaseapp.com",
+    databaseURL: "https://sklad-c6daf-default-rtdb.europe-west1.firebasedatabase.app/",
+    projectId: "sklad-c6daf",
+    storageBucket: "sklad-c6daf.appspot.com",
+    messagingSenderId: "1033169323962",
+    appId: "1:1033169323962:web:73dd54812574d48aeabf83"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+</script>
+</body>
+</html>
