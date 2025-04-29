@@ -289,13 +289,23 @@ async function saveEntry() {
     partsData.push(entry);
   }
 
-  arrivalLog.push({ catalog, name, qty: quantity, date: arrival, location, supplier });
+  // Додати в історію надходжень
+  arrivalLog.push({
+    catalog,
+    name,
+    qty: quantity,
+    date: arrival,
+    location,
+    supplier
+  });
 
-  await saveToFirebase();
+  await saveToFirebase();       // 💾 ОБОВ'ЯЗКОВО зберігаємо
   renderTable();
+  renderArrivalHistory();       // 🔁 Оновлюємо таблицю
   clearForm();
   alert("Запчастину збережено!");
 }
+
 
 // --- Побудова таблиці складу ---
 function renderTable() {
