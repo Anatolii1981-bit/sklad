@@ -267,10 +267,10 @@ function toggleForm(force = null) {
     }
   }
 }
-</script>
-<script>
+
+
 // --- Збереження нової запчастини з мультидодаванням ---
-<script>
+
 async function saveEntry() {
   try {
     const name = document.getElementById("name").value.trim();
@@ -311,7 +311,7 @@ async function saveEntry() {
     alert("Помилка при збереженні: " + error.message);
   }
 }
-</script>
+
 
 
 // --- Побудова таблиці складу ---
@@ -538,7 +538,7 @@ function exportTechPark() {
   XLSX.utils.book_append_sheet(wb, ws, "Техніка");
   XLSX.writeFile(wb, "techpark.xlsx");
 }
-</script>
+
 </script>
 </body>
 </html>
