@@ -4,25 +4,24 @@
   <meta charset="UTF-8">
   <title>Склад зберігання запчастин</title>
 
-  <!-- Firebase -->
+  <!-- Підключення Firebase -->
   <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-database-compat.js"></script>
- <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDcUKoOroCPgK2tg_zBv9WIji2VYsUTCZU",
-    authDomain: "sklad-c6daf.firebaseapp.com",
-    databaseURL: "https://sklad-c6daf-default-rtdb.europe-west1.firebasedatabase.app/",  <-- Ось тут твоя база
-    projectId: "sklad-c6daf",
-    storageBucket: "sklad-c6daf.appspot.com",
-    messagingSenderId: "1033169323962",
-    appId: "1:1033169323962:web:73dd54812574d48aeabf83"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-</script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDcUKoOroCPgK2tg_zBv9WIji2VYsUTCZU",
+      authDomain: "sklad-c6daf.firebaseapp.com",
+      databaseURL: "https://sklad-c6daf-default-rtdb.europe-west1.firebasedatabase.app/",
+      projectId: "sklad-c6daf",
+      storageBucket: "sklad-c6daf.appspot.com",
+      messagingSenderId: "1033169323962",
+      appId: "1:1033169323962:web:73dd54812574d48aeabf83"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+  </script>
 
-
-  <!-- XLSX для експорту -->
+  <!-- Підключення XLSX для експорту -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
@@ -45,7 +44,7 @@
 </head>
 
 <body>
-<!-- Авторизація -->
+<!-- Вікно авторизації -->
 <div id="authScreen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10000;">
   <h2>Введіть пароль для входу</h2>
   <input type="password" id="authInput" placeholder="Пароль">
@@ -54,7 +53,6 @@
 </div>
 
 <h2>Склад зберігання запчастин</h2>
-
 <input type="text" id="searchInput" placeholder="Пошук..." oninput="renderTable()">
 <button onclick="toggleForm()">Додати нову</button>
 <button onclick="openTechManager()">Управління технікою</button>
@@ -78,6 +76,7 @@
   </thead>
   <tbody></tbody>
 </table>
+
 <!-- Форма додавання запчастини -->
 <div id="formRow" style="display:none;">
   <input id="catalog" placeholder="Каталожний номер">
@@ -89,7 +88,7 @@
   <button onclick="saveEntry()">Зберегти</button>
 </div>
 
-<!-- Блок встановлення запчастини -->
+<!-- Блок встановлення -->
 <div id="installRow" style="display:none;">
   <strong>Встановлення запчастини:</strong><br>
   <label>Кількість:</label>
@@ -177,7 +176,8 @@
   </thead>
   <tbody id="arrivalBody"></tbody>
 </table>
-<!-- Основна логіка складу -->
+
+<!-- Тут далі йде основна логіка складу -->
 <script>
 // --- Глобальні змінні ---
 let partsData = [];
@@ -213,9 +213,9 @@ window.onload = async () => {
   await loadFromFirebase();
 };
 
-// --- Збереження та завантаження з Firebase ---
+// --- Збереження і завантаження з Firebase ---
 async function saveToFirebase() {
-  return db.ref('warehouse').set({ partsData, techGroups, historyLog, arrivalLog });
+  await db.ref('warehouse').set({ partsData, techGroups, historyLog, arrivalLog });
 }
 
 async function loadFromFirebase() {
@@ -237,17 +237,6 @@ function refreshData() {
   loadFromFirebase();
   alert("Дані оновлені! ✅");
 }
-
-// --- Очищення форми ---
-function clearForm() {
-  document.getElementById("catalog").value = "";
-  document.getElementById("name").value = "";
-  document.getElementById("quantity").value = "";
-  document.getElementById("location").value = "";
-  document.getElementById("supplier").value = "";
-  document.getElementById("installed").value = "";
-  document.getElementById("catalog").focus();
-}
 // --- Форма додавання ---
 function toggleForm(force = null) {
   const form = document.getElementById("formRow");
@@ -257,55 +246,51 @@ function toggleForm(force = null) {
   } else if (force === false) {
     form.style.display = "none";
   } else {
-    if (form.style.display === "none") {
-      form.style.display = "block";
-      clearForm();
-    } else {
-      form.style.display = "none";
-    }
+    form.style.display = (form.style.display === "none") ? "block" : "none";
+    if (form.style.display === "block") clearForm();
   }
 }
 
-// --- Додавання запчастини ---
+function clearForm() {
+  document.getElementById("catalog").value = "";
+  document.getElementById("name").value = "";
+  document.getElementById("quantity").value = "";
+  document.getElementById("location").value = "";
+  document.getElementById("supplier").value = "";
+  document.getElementById("installed").value = "";
+  document.getElementById("catalog").focus();
+}
+
 async function saveEntry() {
-  try {
-    const name = document.getElementById("name").value.trim();
-    const catalog = document.getElementById("catalog").value.trim();
-    const quantity = parseInt(document.getElementById("quantity").value.trim());
-    const location = document.getElementById("location").value.trim();
-    const supplier = document.getElementById("supplier").value.trim();
-    const installed = document.getElementById("installed").value;
+  const name = document.getElementById("name").value.trim();
+  const catalog = document.getElementById("catalog").value.trim();
+  const quantity = parseInt(document.getElementById("quantity").value.trim());
+  const location = document.getElementById("location").value.trim();
+  const supplier = document.getElementById("supplier").value.trim();
+  const installed = document.getElementById("installed").value;
 
-    if (!name || !catalog || isNaN(quantity) || quantity <= 0 || !location || !supplier) {
-      alert("Заповніть всі поля правильно!");
-      return;
-    }
-
-    const now = new Date();
-    const arrival = now.toLocaleDateString("uk-UA");
-    const entry = { name, catalog, quantity, location, installed, arrival, supplier };
-
-    const existing = partsData.find(p => p.catalog.toLowerCase() === catalog.toLowerCase());
-    if (existing) {
-      existing.quantity += quantity;
-      existing.arrival = arrival;
-    } else {
-      partsData.push(entry);
-    }
-    arrivalLog.push({ catalog, name, qty: quantity, date: arrival, location, supplier });
-
-    await db.ref('warehouse').update({
-      partsData: partsData,
-      arrivalLog: arrivalLog
-    });
-
-    renderTable();
-    clearForm();
-    alert("Запчастину збережено!");
-  } catch (error) {
-    console.error("❌ Помилка при збереженні:", error);
-    alert("Помилка при збереженні: " + error.message);
+  if (!name || !catalog || isNaN(quantity) || quantity <= 0 || !location || !supplier) {
+    alert("Заповніть всі поля правильно!");
+    return;
   }
+
+  const now = new Date();
+  const arrival = now.toLocaleDateString("uk-UA");
+  const entry = { name, catalog, quantity, location, installed, arrival, supplier };
+
+  const existing = partsData.find(p => p.catalog.toLowerCase() === catalog.toLowerCase());
+  if (existing) {
+    existing.quantity += quantity;
+    existing.arrival = arrival;
+  } else {
+    partsData.push(entry);
+  }
+  arrivalLog.push({ catalog, name, qty: quantity, date: arrival, location, supplier });
+
+  await saveToFirebase();
+  renderTable();
+  clearForm();
+  alert("Запчастину збережено!");
 }
 
 // --- Побудова таблиці складу ---
@@ -313,8 +298,8 @@ function renderTable() {
   const tbody = document.querySelector("#partsTable tbody");
   tbody.innerHTML = "";
   const filter = document.getElementById("searchInput").value.toLowerCase();
-
   let counter = 1;
+
   partsData.forEach((item, index) => {
     if (item.quantity > 0 && 
         (item.name.toLowerCase().includes(filter) || 
@@ -336,9 +321,9 @@ function renderTable() {
   });
 }
 
-// --- Завершення скрипту ---
+// --- Тут продовжується логіка встановлення, видалення, історії і експорту ---
 </script>
+
 </body>
 </html>
-
 
