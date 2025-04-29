@@ -213,8 +213,21 @@ window.onload = async () => {
   if (localStorage.getItem("authPassed") === "true") {
     document.getElementById("authScreen").style.display = "none";
   }
-  await loadFromFirebase();
+
+  await loadFromFirebase(); // ✅ partsData вже є
+
+  // --- Автозаповнення найменування за каталожним номером ---
+  document.getElementById("catalog").addEventListener("input", function () {
+    const catalogInput = this.value.trim().toLowerCase();
+    const found = partsData.find(p => p.catalog.toLowerCase() === catalogInput);
+    if (found) {
+      document.getElementById("name").value = found.name;
+    } else {
+      document.getElementById("name").value = "";
+    }
+  });
 };
+
 
 // --- Збереження та завантаження з Firebase ---
 async function saveToFirebase() {
