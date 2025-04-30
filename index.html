@@ -118,12 +118,13 @@
 <h3>Історія встановлення</h3>
 <input type="text" id="historySearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderHistory()">
 <button onclick="toggleHistory()">📜 Показати/сховати історію встановлення</button>
-<div style="margin:10px 0;">
+<button onclick="toggleInstallExport()">📤 Експорт встановлень по даті</button>
+<div id="installExportBlock" style="display:none; margin: 10px 0;">
   <label>З:</label>
   <input type="date" id="installFrom">
   <label>По:</label>
   <input type="date" id="installTo">
-  <button onclick="exportFilteredInstallations()">📤 Експорт встановлень по даті</button>
+  <button onclick="exportFilteredInstallations()">📤 Виконати експорт</button>
   <button onclick="clearInstallHistory()">🧹 Очистити історію встановлення</button>
 
 </div>
@@ -144,12 +145,13 @@
 <h3>Історія надходжень</h3>
 <input type="text" id="arrivalSearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderArrivalHistory()">
 <button onclick="toggleArrivalHistory()">📥 Показати/сховати історію надходжень</button>
-<div style="margin:10px 0;">
+<button onclick="toggleArrivalExport()">📤 Експорт надходжень по даті</button>
+<div id="arrivalExportBlock" style="display:none; margin: 10px 0;">
   <label>З:</label>
   <input type="date" id="arrivalFrom">
   <label>По:</label>
   <input type="date" id="arrivalTo">
-  <button onclick="exportFilteredArrivals()">📤 Експорт надходжень по даті</button>
+  <button onclick="exportFilteredArrivals()">📤 Виконати експорт</button>
   <button onclick="clearArrivalHistory()">🧹 Очистити історію надходжень</button>
 
 </div>
