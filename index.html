@@ -113,7 +113,6 @@
     <thead>
       <tr>
         <th>Назва</th>
-        <th>Гос. номер</th>
         <th>Внутр. номер</th>
         <th>Оператор</th>
         <th>❌</th>
@@ -510,12 +509,12 @@ function renderTechList() {
   list.forEach((tech, i) => {
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td>${tech.name}</td>
-      <td>${tech.gov || ""}</td>
-      <td>${tech.internal || ""}</td>
-      <td>${tech.operator || ""}</td>
-      <td><button style="color:red;" onclick="deleteTech('${group}', ${i})">✖</button></td>
-    `;
+  <td>${tech.name}</td>
+  <td>${tech.internal || ""}</td>
+  <td>${tech.operator || ""}</td>
+  <td><button style="color:red;" onclick="deleteTech('${group}', ${i})">✖</button></td>
+`;
+
     tbody.appendChild(row);
   });
 }
