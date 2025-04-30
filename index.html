@@ -59,6 +59,7 @@
     <tr>
       <th>№</th>
       <th>Каталожний номер</th>
+      <th>Каталожний номер не оригінал</th>
       <th>Найменування</th>
       <th>Кількість</th>
       <th>Місце зберігання</th>
@@ -73,6 +74,7 @@
 <!-- Форма додавання -->
 <div id="formRow" style="display:none;">
   <input id="catalog" placeholder="Каталожний номер" autofocus>
+  <input id="altCatalog" placeholder="Каталожний номер не оригінал">
   <input id="name" placeholder="Найменування">
   <input type="number" id="quantity" placeholder="Кількість" min="1">
   <input id="location" placeholder="Місце зберігання">
@@ -161,6 +163,7 @@
   <thead>
     <tr>
       <th>Каталожний номер</th>
+      <th>Каталожний номер не оригінал</th>
       <th>Найменування</th>
       <th>Кількість</th>
       <th>Дата встановлення</th>
@@ -192,6 +195,7 @@
   <thead>
     <tr>
       <th>Каталожний номер</th>
+      <th>Каталожний номер не оригінал</th>
       <th>Найменування</th>
       <th>Кількість</th>
       <th>Дата надходження</th>
@@ -304,6 +308,7 @@ function toggleForm(force = null) {
 
 function clearForm() {
   document.getElementById("catalog").value = "";
+  document.getElementById("altCatalog").value = ""; // 🆕 ДОДАЙ ЦЕЙ РЯДОК
   document.getElementById("name").value = "";
   document.getElementById("quantity").value = "";
   document.getElementById("location").value = "";
@@ -315,6 +320,7 @@ function clearForm() {
 async function saveEntry() {
   const name = document.getElementById("name").value.trim();
   const catalog = document.getElementById("catalog").value.trim();
+  const altCatalog = document.getElementById("altCatalog").value.trim();  // 🆕 додано
   const quantity = parseInt(document.getElementById("quantity").value.trim());
   const location = document.getElementById("location").value.trim();
   const supplier = document.getElementById("supplier").value.trim();
@@ -327,7 +333,7 @@ async function saveEntry() {
 
   const now = new Date();
   const arrival = now.toLocaleDateString("uk-UA");
-  const entry = { name, catalog, quantity, location, installed, arrival, supplier };
+  const entry = { name, catalog, altCatalog, quantity, location, installed, arrival, supplier };  // 🆕 додано altCatalog
 
   const existing = partsData.find(p => p.catalog.toLowerCase() === catalog.toLowerCase());
   if (existing) {
@@ -337,9 +343,9 @@ async function saveEntry() {
     partsData.push(entry);
   }
 
-  // Додати в історію надходжень
   arrivalLog.push({
     catalog,
+    altCatalog,  // 🆕 додано altCatalog в історію надходжень
     name,
     qty: quantity,
     date: arrival,
@@ -347,9 +353,9 @@ async function saveEntry() {
     supplier
   });
 
-  await saveToFirebase();       // 💾 ОБОВ'ЯЗКОВО зберігаємо
+  await saveToFirebase();
   renderTable();
-  renderArrivalHistory();       // 🔁 Оновлюємо таблицю
+  renderArrivalHistory();
   clearForm();
   alert("Запчастину збережено!");
 }
@@ -370,12 +376,13 @@ function renderTable() {
       const row = tbody.insertRow();
       row.insertCell(0).textContent = counter++;
       row.insertCell(1).textContent = item.catalog;
-      row.insertCell(2).textContent = item.name;
-      row.insertCell(3).textContent = item.quantity;
-      row.insertCell(4).textContent = item.location;
-      row.insertCell(5).textContent = item.arrival;
-      row.insertCell(6).textContent = item.installed || "";
-      row.insertCell(7).innerHTML = `
+      row.insertCell(2).textContent = item.altCatalog || "";
+      row.insertCell(3).textContent = item.name;
+      row.insertCell(4).textContent = item.quantity;
+      row.insertCell(5).textContent = item.location;
+      row.insertCell(6).textContent = item.arrival;
+      row.insertCell(7).textContent = item.installed || "";
+      row.insertCell(8).innerHTML = `
   <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
   <span class="edit-btn" onclick="editLocation(${index})">✏️</span> |
   <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>
@@ -435,13 +442,15 @@ const techObj = groupList.find(t => t.name === tech) || {};
 
 historyLog.push({
   catalog: item.catalog,
+  altCatalog: item.altCatalog || "",  // 🆕 додано
   name: item.name,
   qty,
   date: installDate,
   tech,
-  internal: techObj.internal || "",
+  internal: techObj.internal || "",  // якщо ти вже додав це раніше
   operator: techObj.operator || ""
 });
+
 
 
   currentInstallIndex = null;
@@ -568,28 +577,23 @@ function renderHistory() {
   historyLog.forEach(entry => {
     if (
       entry.catalog.toLowerCase().includes(filter) ||
-      entry.name.toLowerCase().includes(filter)
+      (entry.name && entry.name.toLowerCase().includes(filter))
     ) {
       const row = tbody.insertRow();
       row.insertCell(0).textContent = entry.catalog;
-row.insertCell(1).textContent = entry.name;
-row.insertCell(2).textContent = entry.qty;
-row.insertCell(3).textContent = entry.date;
-row.insertCell(4).textContent = entry.tech;
-row.insertCell(5).textContent = entry.internal || "";
-row.insertCell(6).textContent = entry.operator || "";
-
+      row.insertCell(1).textContent = entry.altCatalog || "";
+      row.insertCell(2).textContent = entry.name;
+      row.insertCell(3).textContent = entry.qty;
+      row.insertCell(4).textContent = entry.date;
+      row.insertCell(5).textContent = entry.tech;
+      row.insertCell(6).textContent = entry.internal || "";
+      row.insertCell(7).textContent = entry.operator || "";
     }
   });
 }
 
-// --- Показати/сховати історію надходжень ---
-function toggleArrivalHistory() {
-  arrivalVisible = !arrivalVisible;
-  document.getElementById("arrivalHistoryTable").style.display = arrivalVisible ? "table" : "none";
-}
 
-// --- Побудова історії надходжень ---
+// --- Показати/сховати історію надходжень ---
 function renderArrivalHistory() {
   const tbody = document.getElementById("arrivalBody");
   const filter = document.getElementById("arrivalSearchInput").value.toLowerCase();
@@ -598,22 +602,25 @@ function renderArrivalHistory() {
   arrivalLog.forEach(entry => {
     if (
       entry.catalog.toLowerCase().includes(filter) ||
-      entry.name.toLowerCase().includes(filter)
+      (entry.name && entry.name.toLowerCase().includes(filter))
     ) {
       const row = tbody.insertRow();
       row.insertCell(0).textContent = entry.catalog;
-      row.insertCell(1).textContent = entry.name;
-      row.insertCell(2).textContent = entry.qty;
-      row.insertCell(3).textContent = entry.date;
-      row.insertCell(4).textContent = entry.location;
-      row.insertCell(5).textContent = entry.supplier;
+      row.insertCell(1).textContent = entry.altCatalog || "";
+      row.insertCell(2).textContent = entry.name;
+      row.insertCell(3).textContent = entry.qty;
+      row.insertCell(4).textContent = entry.date;
+      row.insertCell(5).textContent = entry.location;
+      row.insertCell(6).textContent = entry.supplier;
     }
   });
 }
+
 // --- Експорт складу у Excel ---
 function exportToExcel() {
   const exportData = partsData.map(p => ({
     "Каталожний номер": p.catalog,
+    "Каталожний номер (не оригінал)": p.altCatalog || "",
     "Найменування": p.name,
     "Кількість": p.quantity,
     "Місце зберігання": p.location,
@@ -659,6 +666,7 @@ function exportFilteredInstallations() {
 
  const exportData = filtered.map(e => ({
   "Каталожний номер": e.catalog,
+   "Каталожний номер (не оригінал)": e.altCatalog || "",
   "Найменування": e.name,
   "Кількість": e.qty,
   "Дата встановлення": e.date,
@@ -691,6 +699,7 @@ function exportFilteredArrivals() {
 
   const exportData = filtered.map(e => ({
     "Каталожний номер": e.catalog,
+    "Каталожний номер (не оригінал)": e.altCatalog || "",
     "Найменування": e.name,
     "Кількість": e.qty,
     "Дата надходження": e.date,
