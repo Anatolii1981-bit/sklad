@@ -530,10 +530,13 @@ function updateTechOptions() {
   list.forEach(item => {
     const opt = document.createElement("option");
     opt.value = item.name;
-    opt.textContent = item.name;
+    const internal = item.internal ? item.internal : "без №";
+    const operator = item.operator ? item.operator : "без оператора";
+    opt.textContent = `${item.name} (${internal}, ${operator})`;
     techSelect.appendChild(opt);
   });
 }
+
 
 // --- Показати/сховати історію встановлення ---
 function toggleHistory() {
