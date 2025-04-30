@@ -469,7 +469,7 @@ function closeTechManager() {
 async function addTech() {
   const group = document.getElementById("groupSelect").value;
   const name = document.getElementById("newTechName").value.trim();
-  const gov = document.getElementById("newTechGov").value.trim();
+  
   const internal = document.getElementById("newTechInternal").value.trim();
   const operator = document.getElementById("newTechOperator").value.trim();
 
@@ -478,7 +478,7 @@ async function addTech() {
     return;
   }
 
-  const newItem = { name, gov, internal, operator };
+  const newItem = { name, internal, operator };
 
   techGroups[group] = techGroups[group] || [];
 
@@ -491,7 +491,7 @@ async function addTech() {
   techGroups[group].push(newItem);
 
   document.getElementById("newTechName").value = "";
-  document.getElementById("newTechGov").value = "";
+ 
   document.getElementById("newTechInternal").value = "";
   document.getElementById("newTechOperator").value = "";
 
