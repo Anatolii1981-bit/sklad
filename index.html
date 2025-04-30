@@ -59,7 +59,7 @@
     <tr>
       <th>№</th>
       <th>Каталожний номер</th>
-      <th>Каталожний номер не оригінал</th>
+      <th>№ не оригінал</th>
       <th>Найменування</th>
       <th>Кількість</th>
       <th>Місце зберігання</th>
@@ -74,7 +74,7 @@
 <!-- Форма додавання -->
 <div id="formRow" style="display:none;">
   <input id="catalog" placeholder="Каталожний номер" autofocus>
-  <input id="altCatalog" placeholder="Каталожний номер не оригінал">
+  <input id="altCatalog" placeholder="№ не оригінал">
   <input id="name" placeholder="Найменування">
   <input type="number" id="quantity" placeholder="Кількість" min="1">
   <input id="location" placeholder="Місце зберігання">
@@ -163,7 +163,7 @@
   <thead>
     <tr>
       <th>Каталожний номер</th>
-      <th>Каталожний номер не оригінал</th>
+      <th>№ не оригінал</th>
       <th>Найменування</th>
       <th>Кількість</th>
       <th>Дата встановлення</th>
@@ -195,7 +195,7 @@
   <thead>
     <tr>
       <th>Каталожний номер</th>
-      <th>Каталожний номер не оригінал</th>
+      <th>№ не оригінал</th>
       <th>Найменування</th>
       <th>Кількість</th>
       <th>Дата надходження</th>
@@ -620,7 +620,7 @@ function renderArrivalHistory() {
 function exportToExcel() {
   const exportData = partsData.map(p => ({
     "Каталожний номер": p.catalog,
-    "Каталожний номер (не оригінал)": p.altCatalog || "",
+    "№ не оригінал": p.altCatalog || "",
     "Найменування": p.name,
     "Кількість": p.quantity,
     "Місце зберігання": p.location,
@@ -666,7 +666,7 @@ function exportFilteredInstallations() {
 
  const exportData = filtered.map(e => ({
   "Каталожний номер": e.catalog,
-   "Каталожний номер (не оригінал)": e.altCatalog || "",
+   "№ не оригінал": e.altCatalog || "",
   "Найменування": e.name,
   "Кількість": e.qty,
   "Дата встановлення": e.date,
@@ -699,7 +699,7 @@ function exportFilteredArrivals() {
 
   const exportData = filtered.map(e => ({
     "Каталожний номер": e.catalog,
-    "Каталожний номер (не оригінал)": e.altCatalog || "",
+    "№ не оригінал": e.altCatalog || "",
     "Найменування": e.name,
     "Кількість": e.qty,
     "Дата надходження": e.date,
