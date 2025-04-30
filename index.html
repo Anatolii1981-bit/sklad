@@ -705,6 +705,15 @@ async function deleteRow(index) {
   renderTable();
   alert("Запчастину видалено! ✅");
 }
+function toggleInstallExport() {
+  const block = document.getElementById("installExportBlock");
+  block.style.display = block.style.display === "none" ? "block" : "none";
+}
+
+function toggleArrivalExport() {
+  const block = document.getElementById("arrivalExportBlock");
+  block.style.display = block.style.display === "none" ? "block" : "none";
+}
 
 </script>
 </body>
