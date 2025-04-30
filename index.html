@@ -98,20 +98,40 @@
 <!-- Модальне управління технікою -->
 <div class="modal" id="techModal">
   <div class="modal-content">
-    <h3>Управління технікою</h3>
-    <label>Група:</label>
-    <select id="groupSelect" onchange="renderTechList()">
-      <option value="Трактор">Трактор</option>
-      <option value="Комбайн">Комбайн</option>
-      <option value="Оприскувач">Оприскувач</option>
-      <option value="Сівалка">Сівалка</option>
-      <option value="Інше">Інше</option>
-    </select>
-    <ul id="techList"></ul>
-    <input id="newTech" placeholder="Нова техніка">
+  <h3>Управління технікою</h3>
+
+  <label>Група:</label>
+  <select id="groupSelect" onchange="renderTechList()">
+    <option value="Трактор">Трактор</option>
+    <option value="Комбайн">Комбайн</option>
+    <option value="Оприскувач">Оприскувач</option>
+    <option value="Сівалка">Сівалка</option>
+    <option value="Інше">Інше</option>
+  </select>
+
+  <table style="width:100%; margin-top:10px; border-collapse: collapse;" border="1">
+    <thead>
+      <tr>
+        <th>Назва</th>
+        <th>Гос. номер</th>
+        <th>Внутр. номер</th>
+        <th>Оператор</th>
+        <th>❌</th>
+      </tr>
+    </thead>
+    <tbody id="techList"></tbody>
+  </table>
+
+  <div style="margin-top:10px;">
+    <input id="newTechName" placeholder="Назва">
+    <input id="newTechGov" placeholder="Гос. номер">
+    <input id="newTechInternal" placeholder="Внутр. номер">
+    <input id="newTechOperator" placeholder="Оператор">
     <button onclick="addTech()">Додати</button>
     <button onclick="closeTechManager()">Закрити</button>
   </div>
+</div>
+
 </div>
 
 <!-- Історія встановлення -->
@@ -437,67 +457,83 @@ function closeTechManager() {
   document.getElementById("techModal").style.display = "none";
 }
 
-// --- Показати список техніки по групі ---
-function renderTechList() {
-  const group = document.getElementById("groupSelect").value;
-  const ul = document.getElementById("techList");
-  ul.innerHTML = "";
-
-  const list = techGroups[group] || [];
-  list.forEach((name, i) => {
-    const li = document.createElement("li");
-    li.textContent = name + " ";
-    const btn = document.createElement("button");
-    btn.textContent = "✖";
-    btn.style.color = "red";
-    btn.style.marginLeft = "10px";
-    btn.onclick = async () => {
-      if (confirm(`Видалити техніку: ${name}?`)) {
-        list.splice(i, 1);
-        await saveToFirebase();
-        renderTechList();
-      }
-    };
-    li.appendChild(btn);
-    ul.appendChild(li);
-  });
-}
-
-// --- Додати техніку ---
+// --- Додати техніку як об'єкт ---
 async function addTech() {
   const group = document.getElementById("groupSelect").value;
-  const name = document.getElementById("newTech").value.trim();
+  const name = document.getElementById("newTechName").value.trim();
+  const gov = document.getElementById("newTechGov").value.trim();
+  const internal = document.getElementById("newTechInternal").value.trim();
+  const operator = document.getElementById("newTechOperator").value.trim();
+
   if (!group || !name) {
-    alert("Оберіть групу і введіть назву техніки!");
+    alert("Назва та група обов'язкові!");
     return;
   }
+
+  const newItem = { name, gov, internal, operator };
 
   techGroups[group] = techGroups[group] || [];
-  if (techGroups[group].includes(name)) {
-    alert("Така техніка вже існує!");
+
+  const duplicate = techGroups[group].some(t => t.name.toLowerCase() === name.toLowerCase());
+  if (duplicate) {
+    alert("Техніка з такою назвою вже існує!");
     return;
   }
 
-  techGroups[group].push(name);
-  document.getElementById("newTech").value = "";
+  techGroups[group].push(newItem);
+
+  document.getElementById("newTechName").value = "";
+  document.getElementById("newTechGov").value = "";
+  document.getElementById("newTechInternal").value = "";
+  document.getElementById("newTechOperator").value = "";
+
   await saveToFirebase();
   renderTechList();
 }
 
-// --- Оновити список техніки у випадаючому списку ---
+// --- Відобразити список техніки у вигляді таблиці ---
+function renderTechList() {
+  const group = document.getElementById("groupSelect").value;
+  const tbody = document.getElementById("techList");
+  tbody.innerHTML = "";
+
+  const list = techGroups[group] || [];
+  list.forEach((tech, i) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${tech.name}</td>
+      <td>${tech.gov || ""}</td>
+      <td>${tech.internal || ""}</td>
+      <td>${tech.operator || ""}</td>
+      <td><button style="color:red;" onclick="deleteTech('${group}', ${i})">✖</button></td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+// --- Видалити техніку ---
+async function deleteTech(group, index) {
+  if (!confirm("Видалити цю техніку?")) return;
+  techGroups[group].splice(index, 1);
+  await saveToFirebase();
+  renderTechList();
+}
+
+// --- Оновити список техніки у встановленні (випадаючий список) ---
 function updateTechOptions() {
   const group = document.getElementById("installGroup").value;
   const techSelect = document.getElementById("installTech");
   techSelect.innerHTML = '<option value="">-- виберіть техніку --</option>';
 
   const list = techGroups[group] || [];
-  list.forEach(name => {
+  list.forEach(item => {
     const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
+    opt.value = item.name;
+    opt.textContent = item.name;
     techSelect.appendChild(opt);
   });
 }
+
 // --- Показати/сховати історію встановлення ---
 function toggleHistory() {
   historyVisible = !historyVisible;
