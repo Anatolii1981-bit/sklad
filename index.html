@@ -231,16 +231,27 @@ let currentInstallIndex = null;
 let historyVisible = false;
 let arrivalVisible = false;
 
+const users = {
+  "Kuznetsov0104": "admin",   // твій теперішній пароль
+  "1234": "editor",
+  "0000": "viewer"
+};
+
 // --- Авторизація ---
 function checkPassword() {
   const input = document.getElementById("authInput").value;
-  if (input === "Kuznetsov0104") {
+  const role = users[input];
+
+  if (role) {
     localStorage.setItem("authPassed", "true");
+    localStorage.setItem("userRole", role);
     document.getElementById("authScreen").style.display = "none";
+    applyRoleRestrictions();
   } else {
     document.getElementById("authMessage").textContent = "В доступі відмовлено!";
   }
 }
+
 
 function logout() {
   localStorage.removeItem("authPassed");
@@ -252,6 +263,11 @@ window.onload = async () => {
   if (localStorage.getItem("authPassed") === "true") {
     document.getElementById("authScreen").style.display = "none";
   }
+  if (localStorage.getItem("authPassed") === "true") {
+  document.getElementById("authScreen").style.display = "none";
+  applyRoleRestrictions(); // 🆕
+}
+
 
   await loadFromFirebase(); // ✅ partsData вже є
 
@@ -810,6 +826,28 @@ async function editOperator(group, index) {
 function toggleArrivalHistory() {
   arrivalVisible = !arrivalVisible;
   document.getElementById("arrivalHistoryTable").style.display = arrivalVisible ? "table" : "none";
+}
+function applyRoleRestrictions() {
+  const role = localStorage.getItem("userRole");
+
+  if (role === "viewer") {
+    // Заборонити редагування
+    document.querySelectorAll("button").forEach(btn => {
+      if (!btn.classList.contains("viewer-allowed")) btn.disabled = true;
+    });
+    document.querySelectorAll("input, select").forEach(el => el.disabled = true);
+  }
+
+  if (role === "editor") {
+    // Заборонити лише адміністративні дії
+    const adminButtons = ["openTechManager", "clearInstallHistory", "clearArrivalHistory"];
+    adminButtons.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = true;
+    });
+  }
+
+  // role === "admin" — нічого не блокуємо
 }
 
 </script>
