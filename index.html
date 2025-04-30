@@ -344,10 +344,12 @@ function renderTable() {
       row.insertCell(4).textContent = item.location;
       row.insertCell(5).textContent = item.arrival;
       row.insertCell(6).textContent = item.installed || "";
-      row.insertCell(7).innerHTML = `
-        <span class="install-btn" onclick="startInstall(${index})">🛠</span> | 
-        <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>
-      `;
+     row.insertCell(7).innerHTML = `
+  <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
+  <span class="edit-btn" onclick="editLocation(${index})">✏️</span> |
+  <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>
+`;
+
     }
   });
 }
@@ -711,6 +713,16 @@ function toggleInstallExport() {
 function toggleArrivalExport() {
   const block = document.getElementById("arrivalExportBlock");
   block.style.display = block.style.display === "none" ? "block" : "none";
+}
+async function editLocation(index) {
+  const item = partsData[index];
+  const newLocation = prompt(`Редагувати місце зберігання для "${item.name}":`, item.location);
+  if (newLocation !== null && newLocation.trim() !== "") {
+    item.location = newLocation.trim();
+    await saveToFirebase();
+    renderTable();
+    alert("Місце зберігання оновлено ✅");
+  }
 }
 
 </script>
