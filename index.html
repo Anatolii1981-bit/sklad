@@ -46,15 +46,13 @@
 </div>
 
 <h2>Склад зберігання запчастин</h2>
-<input type="text" id="searchInput" placeholder="Пошук..." oninput="renderTable()" class="viewer-allowed">
-
+<input type="text" id="searchInput" placeholder="Пошук..." oninput="renderTable()">
 <button onclick="toggleForm()">Додати нову</button>
 <button onclick="openTechManager()">Управління технікою</button>
 <button onclick="exportToExcel()">📤 Експорт складу</button>
 <button onclick="exportTechPark()">📤 Експорт техніки</button>
 <button onclick="refreshData()">🔄 Оновити дані</button>
-<button onclick="logout()" class="viewer-allowed">🚪 Вийти</button>
-
+<button onclick="logout()">🚪 Вийти</button>
 
 <table id="partsTable">
   <thead>
@@ -147,8 +145,7 @@
 
 <!-- Історія встановлення -->
 <h3>Історія встановлення</h3>
-<input type="text" id="historySearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderHistory()" class="viewer-allowed">
-
+<input type="text" id="historySearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderHistory()">
 <button onclick="toggleHistory()">📜 Показати/сховати історію встановлення</button>
 <button onclick="toggleInstallExport()">📤 Експорт встановлень по даті</button>
 <div id="installExportBlock" style="display:none; margin: 10px 0;">
@@ -180,8 +177,7 @@
 
 <!-- Історія надходжень -->
 <h3>Історія надходжень</h3>
-<input type="text" id="arrivalSearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderArrivalHistory()" class="viewer-allowed">
-
+<input type="text" id="arrivalSearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderArrivalHistory()">
 <button onclick="toggleArrivalHistory()">📥 Показати/сховати історію надходжень</button>
 <button onclick="toggleArrivalExport()">📤 Експорт надходжень по даті</button>
 <div id="arrivalExportBlock" style="display:none; margin: 10px 0;">
@@ -235,27 +231,16 @@ let currentInstallIndex = null;
 let historyVisible = false;
 let arrivalVisible = false;
 
-const users = {
-  "Kuznetsov0104": "admin",   // твій теперішній пароль
-  "1234": "editor",
-  "0000": "viewer"
-};
-
 // --- Авторизація ---
 function checkPassword() {
   const input = document.getElementById("authInput").value;
-  const role = users[input];
-
-  if (role) {
+  if (input === "Kuznetsov0104") {
     localStorage.setItem("authPassed", "true");
-    localStorage.setItem("userRole", role);
     document.getElementById("authScreen").style.display = "none";
-    applyRoleRestrictions();
   } else {
     document.getElementById("authMessage").textContent = "В доступі відмовлено!";
   }
 }
-
 
 function logout() {
   localStorage.removeItem("authPassed");
@@ -267,11 +252,6 @@ window.onload = async () => {
   if (localStorage.getItem("authPassed") === "true") {
     document.getElementById("authScreen").style.display = "none";
   }
-  if (localStorage.getItem("authPassed") === "true") {
-  document.getElementById("authScreen").style.display = "none";
-  applyRoleRestrictions(); // 🆕
-}
-
 
   await loadFromFirebase(); // ✅ partsData вже є
 
@@ -638,7 +618,7 @@ function renderArrivalHistory() {
 
 // --- Експорт складу у Excel ---
 function exportToExcel() {
-  const exportData = partsData
+const exportData = partsData
   .filter(p => p && p.catalog && p.name && p.quantity > 0) // 💡 прибираємо неправильні обʼєкти
   .map(p => ({
     "Каталожний номер": p.catalog,
@@ -650,8 +630,6 @@ function exportToExcel() {
     "Дата встановлення": p.installed || "",
     "Постачальник": p.supplier
   }));
-
-
   const worksheet = XLSX.utils.json_to_sheet(exportData);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Склад");
@@ -831,32 +809,7 @@ function toggleArrivalHistory() {
   arrivalVisible = !arrivalVisible;
   document.getElementById("arrivalHistoryTable").style.display = arrivalVisible ? "table" : "none";
 }
-function applyRoleRestrictions() {
-  const role = localStorage.getItem("userRole");
-
-  if (role === "viewer") {
-    // Заборонити редагування
-    document.querySelectorAll("button").forEach(btn => {
-      if (!btn.classList.contains("viewer-allowed")) btn.disabled = true;
-    });
-    document.querySelectorAll("input, select").forEach(el => el.disabled = true);
-  }
-
-  if (role === "editor") {
-    // Заборонити лише адміністративні дії
-    const adminButtons = ["openTechManager", "clearInstallHistory", "clearArrivalHistory"];
-    adminButtons.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.disabled = true;
-    });
-  }
-
-  // role === "admin" — нічого не блокуємо
-}
 
 </script>
 </body>
 </html>
-
-
-
