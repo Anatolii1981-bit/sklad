@@ -511,7 +511,7 @@ function renderTechList() {
     row.innerHTML = `
   <td>${tech.name}</td>
   <td>${tech.internal || ""}</td>
-  <td>${tech.operator || ""}</td>
+  <td><span class="edit-btn" onclick="editOperator('${group}', ${i})">${tech.operator || "(редагувати)"}</span></td>
   <td><button style="color:red;" onclick="deleteTech('${group}', ${i})">✖</button></td>
 `;
 
@@ -772,6 +772,16 @@ async function editLocation(index) {
     await saveToFirebase();
     renderTable();
     alert("Місце зберігання оновлено ✅");
+  }
+}
+async function editOperator(group, index) {
+  const current = techGroups[group][index];
+  const newOp = prompt(`Редагувати оператора для "${current.name}":`, current.operator || "");
+  if (newOp !== null) {
+    current.operator = newOp.trim();
+    await saveToFirebase();
+    renderTechList();
+    alert("Оператора оновлено ✅");
   }
 }
 
