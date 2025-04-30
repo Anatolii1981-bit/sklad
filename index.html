@@ -46,13 +46,15 @@
 </div>
 
 <h2>Склад зберігання запчастин</h2>
-<input type="text" id="searchInput" placeholder="Пошук..." oninput="renderTable()">
+<input type="text" id="searchInput" placeholder="Пошук..." oninput="renderTable()" class="viewer-allowed">
+
 <button onclick="toggleForm()">Додати нову</button>
 <button onclick="openTechManager()">Управління технікою</button>
 <button onclick="exportToExcel()">📤 Експорт складу</button>
 <button onclick="exportTechPark()">📤 Експорт техніки</button>
 <button onclick="refreshData()">🔄 Оновити дані</button>
-<button onclick="logout()">🚪 Вийти</button>
+<button onclick="logout()" class="viewer-allowed">🚪 Вийти</button>
+
 
 <table id="partsTable">
   <thead>
@@ -145,7 +147,8 @@
 
 <!-- Історія встановлення -->
 <h3>Історія встановлення</h3>
-<input type="text" id="historySearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderHistory()">
+<input type="text" id="historySearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderHistory()" class="viewer-allowed">
+
 <button onclick="toggleHistory()">📜 Показати/сховати історію встановлення</button>
 <button onclick="toggleInstallExport()">📤 Експорт встановлень по даті</button>
 <div id="installExportBlock" style="display:none; margin: 10px 0;">
@@ -177,7 +180,8 @@
 
 <!-- Історія надходжень -->
 <h3>Історія надходжень</h3>
-<input type="text" id="arrivalSearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderArrivalHistory()">
+<input type="text" id="arrivalSearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderArrivalHistory()" class="viewer-allowed">
+
 <button onclick="toggleArrivalHistory()">📥 Показати/сховати історію надходжень</button>
 <button onclick="toggleArrivalExport()">📤 Експорт надходжень по даті</button>
 <div id="arrivalExportBlock" style="display:none; margin: 10px 0;">
