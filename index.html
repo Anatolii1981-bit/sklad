@@ -640,16 +640,24 @@ const exportData = partsData
 // --- Експорт парку техніки у Excel ---
 function exportTechPark() {
   const exportData = [];
+
   for (const group in techGroups) {
-    techGroups[group].forEach(name => {
-      exportData.push({ Група: group, Техніка: name });
+    techGroups[group].forEach(tech => {
+      exportData.push({
+        "Група": group,
+        "Назва": tech.name || "",
+        "Внутр. номер": tech.internal || "",
+        "Оператор": tech.operator || ""
+      });
     });
   }
+
   const worksheet = XLSX.utils.json_to_sheet(exportData);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Техніка");
   XLSX.writeFile(workbook, "техніка.xlsx");
 }
+
 
 // --- Експорт встановлень по діапазону дат ---
 function exportFilteredInstallations() {
