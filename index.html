@@ -618,7 +618,9 @@ function renderArrivalHistory() {
 
 // --- Експорт складу у Excel ---
 function exportToExcel() {
-  const exportData = partsData.map(p => ({
+  const exportData = partsData
+  .filter(p => p && p.catalog && p.name && p.quantity > 0) // 💡 прибираємо неправильні обʼєкти
+  .map(p => ({
     "Каталожний номер": p.catalog,
     "№ не оригінал": p.altCatalog || "",
     "Найменування": p.name,
@@ -628,6 +630,7 @@ function exportToExcel() {
     "Дата встановлення": p.installed || "",
     "Постачальник": p.supplier
   }));
+
 
   const worksheet = XLSX.utils.json_to_sheet(exportData);
   const workbook = XLSX.utils.book_new();
