@@ -657,13 +657,16 @@ function exportFilteredInstallations() {
     return entryDate >= from && entryDate <= to;
   });
 
-  const exportData = filtered.map(e => ({
-    "Каталожний номер": e.catalog,
-    "Найменування": e.name,
-    "Кількість": e.qty,
-    "Дата встановлення": e.date,
-    "Техніка": e.tech
-  }));
+ const exportData = filtered.map(e => ({
+  "Каталожний номер": e.catalog,
+  "Найменування": e.name,
+  "Кількість": e.qty,
+  "Дата встановлення": e.date,
+  "Техніка": e.tech,
+  "Внутр. номер": e.internal || "",
+  "Оператор": e.operator || ""
+}));
+
 
   const worksheet = XLSX.utils.json_to_sheet(exportData);
   const workbook = XLSX.utils.book_new();
