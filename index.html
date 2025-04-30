@@ -33,7 +33,7 @@
 <div id="authScreen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10000;">
   <h2>Введіть пароль для входу</h2>
   <input type="password" id="authInput" placeholder="Пароль">
-    <button id="loginBtn">Увійти</button> <!-- ✅ новий варіант -->
+  <button onclick="checkPassword()">Увійти</button>
   <p id="authMessage" style="color:red; margin-top:10px;"></p>
 </div>
 
@@ -98,54 +98,32 @@
 <!-- Модальне управління технікою -->
 <div class="modal" id="techModal">
   <div class="modal-content">
-  <h3>Управління технікою</h3>
-
-  <label>Група:</label>
-  <select id="groupSelect" onchange="renderTechList()">
-    <option value="Трактор">Трактор</option>
-    <option value="Комбайн">Комбайн</option>
-    <option value="Оприскувач">Оприскувач</option>
-    <option value="Сівалка">Сівалка</option>
-    <option value="Інше">Інше</option>
-  </select>
-
-  <table style="width:100%; margin-top:10px; border-collapse: collapse;" border="1">
-    <thead>
-      <tr>
-        <th>Назва</th>
-        <th>Гос. номер</th>
-        <th>Внутр. номер</th>
-        <th>Оператор</th>
-        <th>❌</th>
-      </tr>
-    </thead>
-    <tbody id="techList"></tbody>
-  </table>
-
-  <div style="margin-top:10px;">
-    <input id="newTechName" placeholder="Назва">
-    <input id="newTechGov" placeholder="Гос. номер">
-    <input id="newTechInternal" placeholder="Внутр. номер">
-    <input id="newTechOperator" placeholder="Оператор">
+    <h3>Управління технікою</h3>
+    <label>Група:</label>
+    <select id="groupSelect" onchange="renderTechList()">
+      <option value="Трактор">Трактор</option>
+      <option value="Комбайн">Комбайн</option>
+      <option value="Оприскувач">Оприскувач</option>
+      <option value="Сівалка">Сівалка</option>
+      <option value="Інше">Інше</option>
+    </select>
+    <ul id="techList"></ul>
+    <input id="newTech" placeholder="Нова техніка">
     <button onclick="addTech()">Додати</button>
     <button onclick="closeTechManager()">Закрити</button>
   </div>
-</div>
-
 </div>
 
 <!-- Історія встановлення -->
 <h3>Історія встановлення</h3>
 <input type="text" id="historySearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderHistory()">
 <button onclick="toggleHistory()">📜 Показати/сховати історію встановлення</button>
-<button onclick="toggleInstallExport()">📤 Експорт встановлень по даті</button>
-<div id="installExportBlock" style="display:none; margin: 10px 0;">
+<div style="margin:10px 0;">
   <label>З:</label>
   <input type="date" id="installFrom">
   <label>По:</label>
   <input type="date" id="installTo">
-  <button onclick="exportFilteredInstallations()">📤 Виконати експорт</button>
-</div>
+  <button onclick="exportFilteredInstallations()">📤 Експорт встановлень по даті</button>
   <button onclick="clearInstallHistory()">🧹 Очистити історію встановлення</button>
 
 </div>
@@ -166,16 +144,14 @@
 <h3>Історія надходжень</h3>
 <input type="text" id="arrivalSearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderArrivalHistory()">
 <button onclick="toggleArrivalHistory()">📥 Показати/сховати історію надходжень</button>
-<button onclick="toggleArrivalExport()">📤 Експорт надходжень по даті</button>
-<div id="arrivalExportBlock" style="display:none; margin: 10px 0;">
+<div style="margin:10px 0;">
   <label>З:</label>
   <input type="date" id="arrivalFrom">
   <label>По:</label>
   <input type="date" id="arrivalTo">
-  <button onclick="exportFilteredArrivals()">📤 Виконати експорт</button>
-</div>
-
+  <button onclick="exportFilteredArrivals()">📤 Експорт надходжень по даті</button>
   <button onclick="clearArrivalHistory()">🧹 Очистити історію надходжень</button>
+
 </div>
 <table id="arrivalHistoryTable" style="display:none;">
   <thead>
@@ -238,21 +214,19 @@ window.onload = async () => {
     document.getElementById("authScreen").style.display = "none";
   }
 
-  // ✅ Прив'язуємо кнопку входу до функції
-  document.getElementById("loginBtn").addEventListener("click", checkPassword);
+  await loadFromFirebase(); // ✅ partsData вже є
 
-  await loadFromFirebase();
-
-  // Автозаповнення найменування
+  // --- Автозаповнення найменування за каталожним номером ---
   document.getElementById("catalog").addEventListener("input", function () {
     const catalogInput = this.value.trim().toLowerCase();
     const found = partsData.find(p => p.catalog.toLowerCase() === catalogInput);
-    document.getElementById("name").value = found ? found.name : "";
+    if (found) {
+      document.getElementById("name").value = found.name;
+    } else {
+      document.getElementById("name").value = "";
+    }
   });
 };
-
-
- 
 
 
 // --- Збереження та завантаження з Firebase ---
@@ -366,12 +340,10 @@ function renderTable() {
       row.insertCell(4).textContent = item.location;
       row.insertCell(5).textContent = item.arrival;
       row.insertCell(6).textContent = item.installed || "";
-     row.insertCell(7).innerHTML = `
-  <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
-  <span class="edit-btn" onclick="editLocation(${index})">✏️</span> |
-  <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>
-`;
-
+      row.insertCell(7).innerHTML = `
+        <span class="install-btn" onclick="startInstall(${index})">🛠</span> | 
+        <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>
+      `;
     }
   });
 }
@@ -422,21 +394,13 @@ async function confirmInstall() {
   const installDate = new Date().toLocaleDateString("uk-UA");
   item.installed = installDate;
 
- const group = document.getElementById("installGroup").value;
-const techName = document.getElementById("installTech").value;
-
-// Знайти техніку по імені
-const fullTech = (techGroups[group] || []).find(t => t.name === techName);
-const techDisplay = fullTech ? `${fullTech.internal || "-"} / ${fullTech.operator || "-"}` : techName;
-
-historyLog.push({
-  catalog: item.catalog,
-  name: item.name,
-  qty,
-  date: installDate,
-  tech: techDisplay
-});
-
+  historyLog.push({
+    catalog: item.catalog,
+    name: item.name,
+    qty,
+    date: installDate,
+    tech
+  });
 
   currentInstallIndex = null;
   document.getElementById("installBlock").style.display = "none";
@@ -467,83 +431,67 @@ function closeTechManager() {
   document.getElementById("techModal").style.display = "none";
 }
 
-// --- Додати техніку як об'єкт ---
-async function addTech() {
-  const group = document.getElementById("groupSelect").value;
-  const name = document.getElementById("newTechName").value.trim();
-  const gov = document.getElementById("newTechGov").value.trim();
-  const internal = document.getElementById("newTechInternal").value.trim();
-  const operator = document.getElementById("newTechOperator").value.trim();
-
-  if (!group || !name) {
-    alert("Назва та група обов'язкові!");
-    return;
-  }
-
-  const newItem = { name, gov, internal, operator };
-
-  techGroups[group] = techGroups[group] || [];
-
-  const duplicate = techGroups[group].some(t => t.name.toLowerCase() === name.toLowerCase());
-  if (duplicate) {
-    alert("Техніка з такою назвою вже існує!");
-    return;
-  }
-
-  techGroups[group].push(newItem);
-
-  document.getElementById("newTechName").value = "";
-  document.getElementById("newTechGov").value = "";
-  document.getElementById("newTechInternal").value = "";
-  document.getElementById("newTechOperator").value = "";
-
-  await saveToFirebase();
-  renderTechList();
-}
-
-// --- Відобразити список техніки у вигляді таблиці ---
+// --- Показати список техніки по групі ---
 function renderTechList() {
   const group = document.getElementById("groupSelect").value;
-  const tbody = document.getElementById("techList");
-  tbody.innerHTML = "";
+  const ul = document.getElementById("techList");
+  ul.innerHTML = "";
 
   const list = techGroups[group] || [];
-  list.forEach((tech, i) => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${tech.name}</td>
-      <td>${tech.gov || ""}</td>
-      <td>${tech.internal || ""}</td>
-      <td>${tech.operator || ""}</td>
-      <td><button style="color:red;" onclick="deleteTech('${group}', ${i})">✖</button></td>
-    `;
-    tbody.appendChild(row);
+  list.forEach((name, i) => {
+    const li = document.createElement("li");
+    li.textContent = name + " ";
+    const btn = document.createElement("button");
+    btn.textContent = "✖";
+    btn.style.color = "red";
+    btn.style.marginLeft = "10px";
+    btn.onclick = async () => {
+      if (confirm(`Видалити техніку: ${name}?`)) {
+        list.splice(i, 1);
+        await saveToFirebase();
+        renderTechList();
+      }
+    };
+    li.appendChild(btn);
+    ul.appendChild(li);
   });
 }
 
-// --- Видалити техніку ---
-async function deleteTech(group, index) {
-  if (!confirm("Видалити цю техніку?")) return;
-  techGroups[group].splice(index, 1);
+// --- Додати техніку ---
+async function addTech() {
+  const group = document.getElementById("groupSelect").value;
+  const name = document.getElementById("newTech").value.trim();
+  if (!group || !name) {
+    alert("Оберіть групу і введіть назву техніки!");
+    return;
+  }
+
+  techGroups[group] = techGroups[group] || [];
+  if (techGroups[group].includes(name)) {
+    alert("Така техніка вже існує!");
+    return;
+  }
+
+  techGroups[group].push(name);
+  document.getElementById("newTech").value = "";
   await saveToFirebase();
   renderTechList();
 }
 
-// --- Оновити список техніки у встановленні (випадаючий список) ---
+// --- Оновити список техніки у випадаючому списку ---
 function updateTechOptions() {
   const group = document.getElementById("installGroup").value;
   const techSelect = document.getElementById("installTech");
   techSelect.innerHTML = '<option value="">-- виберіть техніку --</option>';
 
   const list = techGroups[group] || [];
-  list.forEach(item => {
+  list.forEach(name => {
     const opt = document.createElement("option");
-    opt.value = item.name;
-    opt.textContent = item.name;
+    opt.value = name;
+    opt.textContent = name;
     techSelect.appendChild(opt);
   });
 }
-
 // --- Показати/сховати історію встановлення ---
 function toggleHistory() {
   historyVisible = !historyVisible;
@@ -751,28 +699,10 @@ async function deleteRow(index) {
   renderTable();
   alert("Запчастину видалено! ✅");
 }
-function toggleInstallExport() {
-  const block = document.getElementById("installExportBlock");
-  block.style.display = block.style.display === "none" ? "block" : "none";
-}
-
-function toggleArrivalExport() {
-  const block = document.getElementById("arrivalExportBlock");
-  block.style.display = block.style.display === "none" ? "block" : "none";
-}
-async function editLocation(index) {
-  const item = partsData[index];
-  const newLocation = prompt(`Редагувати місце зберігання для "${item.name}":`, item.location);
-  if (newLocation !== null && newLocation.trim() !== "") {
-    item.location = newLocation.trim();
-    await saveToFirebase();
-    renderTable();
-    alert("Місце зберігання оновлено ✅");
-  }
-}
 
 </script>
 </body>
 </html>
+
 
 
