@@ -804,6 +804,10 @@ async function editOperator(group, index) {
     alert("Оператора оновлено ✅");
   }
 }
+function toggleArrivalHistory() {
+  arrivalVisible = !arrivalVisible;
+  document.getElementById("arrivalHistoryTable").style.display = arrivalVisible ? "table" : "none";
+}
 
 </script>
 </body>
