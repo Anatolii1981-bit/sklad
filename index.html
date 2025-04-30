@@ -158,6 +158,8 @@
       <th>Кількість</th>
       <th>Дата встановлення</th>
       <th>Техніка</th>
+      <th>Внутр. номер</th>
+<th>Оператор</th>
     </tr>
   </thead>
   <tbody id="historyBody"></tbody>
@@ -421,13 +423,19 @@ async function confirmInstall() {
   const installDate = new Date().toLocaleDateString("uk-UA");
   item.installed = installDate;
 
-  historyLog.push({
-    catalog: item.catalog,
-    name: item.name,
-    qty,
-    date: installDate,
-    tech
-  });
+ const groupList = techGroups[group] || [];
+const techObj = groupList.find(t => t.name === tech) || {};
+
+historyLog.push({
+  catalog: item.catalog,
+  name: item.name,
+  qty,
+  date: installDate,
+  tech,
+  internal: techObj.internal || "",
+  operator: techObj.operator || ""
+});
+
 
   currentInstallIndex = null;
   document.getElementById("installBlock").style.display = "none";
@@ -557,10 +565,13 @@ function renderHistory() {
     ) {
       const row = tbody.insertRow();
       row.insertCell(0).textContent = entry.catalog;
-      row.insertCell(1).textContent = entry.name;
-      row.insertCell(2).textContent = entry.qty;
-      row.insertCell(3).textContent = entry.date;
-      row.insertCell(4).textContent = entry.tech;
+row.insertCell(1).textContent = entry.name;
+row.insertCell(2).textContent = entry.qty;
+row.insertCell(3).textContent = entry.date;
+row.insertCell(4).textContent = entry.tech;
+row.insertCell(5).textContent = entry.internal || "";
+row.insertCell(6).textContent = entry.operator || "";
+
     }
   });
 }
