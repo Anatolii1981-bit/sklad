@@ -119,12 +119,15 @@
 <input type="text" id="historySearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderHistory()">
 <button onclick="toggleHistory()">📜 Показати/сховати історію встановлення</button>
 <button onclick="toggleInstallExport()">📤 Експорт встановлень по даті</button>
+
 <div id="installExportBlock" style="display:none; margin: 10px 0;">
   <label>З:</label>
   <input type="date" id="installFrom">
   <label>По:</label>
   <input type="date" id="installTo">
   <button onclick="exportFilteredInstallations()">📤 Виконати експорт</button>
+</div>
+
   <button onclick="clearInstallHistory()">🧹 Очистити історію встановлення</button>
 
 </div>
@@ -146,12 +149,15 @@
 <input type="text" id="arrivalSearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderArrivalHistory()">
 <button onclick="toggleArrivalHistory()">📥 Показати/сховати історію надходжень</button>
 <button onclick="toggleArrivalExport()">📤 Експорт надходжень по даті</button>
+
 <div id="arrivalExportBlock" style="display:none; margin: 10px 0;">
   <label>З:</label>
   <input type="date" id="arrivalFrom">
   <label>По:</label>
   <input type="date" id="arrivalTo">
   <button onclick="exportFilteredArrivals()">📤 Виконати експорт</button>
+</div>
+
   <button onclick="clearArrivalHistory()">🧹 Очистити історію надходжень</button>
 
 </div>
