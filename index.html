@@ -420,13 +420,21 @@ async function confirmInstall() {
   const installDate = new Date().toLocaleDateString("uk-UA");
   item.installed = installDate;
 
-  historyLog.push({
-    catalog: item.catalog,
-    name: item.name,
-    qty,
-    date: installDate,
-    tech
-  });
+ const group = document.getElementById("installGroup").value;
+const techName = document.getElementById("installTech").value;
+
+// Знайти техніку по імені
+const fullTech = (techGroups[group] || []).find(t => t.name === techName);
+const techDisplay = fullTech ? `${fullTech.internal || "-"} / ${fullTech.operator || "-"}` : techName;
+
+historyLog.push({
+  catalog: item.catalog,
+  name: item.name,
+  qty,
+  date: installDate,
+  tech: techDisplay
+});
+
 
   currentInstallIndex = null;
   document.getElementById("installBlock").style.display = "none";
