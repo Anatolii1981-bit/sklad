@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -102,7 +103,9 @@
     const catalogInput = document.getElementById('catalogNumber');
     const nameInput = document.getElementById('name');
     const machineNumberSelect = document.getElementById('machineNumber');
+
     let parts = [];
+    let entries = [];
     let editIndex = -1;
     let visibleHistory = null;
 
@@ -129,6 +132,8 @@
         const machineNumber = machineNumberSelect.value;
         const type = document.getElementById('type').value;
 
+        entries.push({ catalogNumber, name, quantity, machineNumber, type });
+
         const existing = parts.find(p => p.catalogNumber === catalogNumber);
 
         if (existing && editIndex === -1) {
@@ -136,7 +141,7 @@
             if (!existing.machineNumber.includes(machineNumber)) {
                 existing.machineNumber += `, ${machineNumber}`;
             }
-            existing.type = type; // исправление: обновляем поле "Оригинал/Аналог"
+            existing.type = type;
         } else if (editIndex > -1) {
             parts[editIndex] = { catalogNumber, name, quantity, machineNumber, type };
         } else {
@@ -201,16 +206,16 @@
             return;
         }
 
-        const filtered = parts.filter(p => p.machineNumber.includes(machineNumber));
+        const filtered = entries.filter(e => e.machineNumber === machineNumber);
         historyBody.innerHTML = '';
-        filtered.forEach((part, index) => {
+        filtered.forEach((entry, index) => {
             const row = historyBody.insertRow();
             row.innerHTML = `
                 <td>${index + 1}</td>
-                <td>${part.catalogNumber}</td>
-                <td>${part.name}</td>
-                <td>${part.quantity}</td>
-                <td>${part.type}</td>
+                <td>${entry.catalogNumber}</td>
+                <td>${entry.name}</td>
+                <td>${entry.quantity}</td>
+                <td>${entry.type}</td>
             `;
         });
         machineTitle.textContent = `История для комбайна: ${machineNumber}`;
@@ -224,5 +229,4 @@
 
 </body>
 </html>
-
 
