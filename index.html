@@ -136,6 +136,7 @@
             if (!existing.machineNumber.includes(machineNumber)) {
                 existing.machineNumber += `, ${machineNumber}`;
             }
+            existing.type = type; // исправление: обновляем поле "Оригинал/Аналог"
         } else if (editIndex > -1) {
             parts[editIndex] = { catalogNumber, name, quantity, machineNumber, type };
         } else {
