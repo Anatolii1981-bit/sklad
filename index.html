@@ -7,7 +7,7 @@
         body { font-family: sans-serif; padding: 20px; }
         input, select, button { margin: 5px; padding: 5px; }
         table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+        th, td { border: 1px solid #ccc; padding:  8px; text-align: left; vertical-align: top; }
         th { background-color: #eee; }
         .btn { padding: 5px 10px; cursor: pointer; }
         .btn-edit { background-color: #4CAF50; color: white; border: none; }
@@ -100,6 +100,7 @@
     const machineTitle = document.getElementById('machineTitle');
     const searchInput = document.getElementById('searchInput');
     const catalogInput = document.getElementById('catalogNumber');
+    const nameInput = document.getElementById('name');
     const machineNumberSelect = document.getElementById('machineNumber');
     let parts = [];
     let editIndex = -1;
@@ -112,21 +113,33 @@
         catalogInput.focus();
     }
 
+    catalogInput.addEventListener('input', () => {
+        const match = parts.find(p => p.catalogNumber === catalogInput.value);
+        if (match) {
+            nameInput.value = match.name;
+        }
+    });
+
     addForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
         const catalogNumber = catalogInput.value;
-        const name = document.getElementById('name').value;
-        const quantity = document.getElementById('quantity').value;
+        const name = nameInput.value;
+        const quantity = parseInt(document.getElementById('quantity').value);
         const machineNumber = machineNumberSelect.value;
         const type = document.getElementById('type').value;
 
-        const part = { catalogNumber, name, quantity, machineNumber, type };
+        const existing = parts.find(p => p.catalogNumber === catalogNumber);
 
-        if (editIndex > -1) {
-            parts[editIndex] = part;
+        if (existing && editIndex === -1) {
+            existing.quantity = parseInt(existing.quantity) + quantity;
+            if (!existing.machineNumber.includes(machineNumber)) {
+                existing.machineNumber += `, ${machineNumber}`;
+            }
+        } else if (editIndex > -1) {
+            parts[editIndex] = { catalogNumber, name, quantity, machineNumber, type };
         } else {
-            parts.push(part);
+            parts.push({ catalogNumber, name, quantity, machineNumber, type });
         }
 
         editIndex = -1;
@@ -143,9 +156,9 @@
     function editRow(index) {
         const part = parts[index];
         catalogInput.value = part.catalogNumber;
-        document.getElementById('name').value = part.name;
+        nameInput.value = part.name;
         document.getElementById('quantity').value = part.quantity;
-        machineNumberSelect.value = part.machineNumber;
+        machineNumberSelect.value = part.machineNumber.split(', ')[0];
         document.getElementById('type').value = part.type;
 
         addForm.style.display = 'block';
@@ -156,14 +169,6 @@
     function renderTable() {
         const filter = searchInput.value.toLowerCase();
         tableBody.innerHTML = '';
-        const map = {};
-
-        parts.forEach((part, index) => {
-            if (!map[part.catalogNumber]) {
-                map[part.catalogNumber] = [];
-            }
-            map[part.catalogNumber].push(part.machineNumber);
-        });
 
         parts.forEach((part, index) => {
             if (
@@ -171,13 +176,12 @@
                 part.name.toLowerCase().includes(filter)
             ) {
                 const row = tableBody.insertRow();
-                const machines = map[part.catalogNumber].join(', ');
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${part.catalogNumber}</td>
                     <td>${part.name}</td>
                     <td>${part.quantity}</td>
-                    <td><span onclick="alert('Заказано для: ${machines}')" style="color:blue; cursor:pointer; text-decoration:underline">${part.machineNumber}</span></td>
+                    <td><span onclick="alert('Заказано для: ${part.machineNumber}')" style="color:blue; cursor:pointer; text-decoration:underline">${part.machineNumber}</span></td>
                     <td>${part.type}</td>
                     <td>
                         <button class="btn btn-edit" onclick="editRow(${index})">Редактировать</button>
@@ -196,7 +200,7 @@
             return;
         }
 
-        const filtered = parts.filter(p => p.machineNumber === machineNumber);
+        const filtered = parts.filter(p => p.machineNumber.includes(machineNumber));
         historyBody.innerHTML = '';
         filtered.forEach((part, index) => {
             const row = historyBody.insertRow();
@@ -219,4 +223,5 @@
 
 </body>
 </html>
+
 
