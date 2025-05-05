@@ -1,289 +1,830 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <title>Учет запчастей</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        input, select, button { margin: 5px; padding: 5px; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
-        th { background-color: #eee; }
-        .btn { padding: 5px 10px; cursor: pointer; }
-        .btn-edit { background-color: #4CAF50; color: white; border: none; }
-        .btn-delete { background-color: #f44336; color: white; border: none; }
-        .controls { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        #addForm { display: none; margin-top: 20px; }
-        .history-buttons { margin-top: 30px; }
-        .machineTitle { margin-top: 20px; font-weight: bold; font-size: 16px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Склад зберігання запчастин</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-database-compat.js"></script>
+  
+  <!-- XLSX -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #f0f0f0; }
+    input, button, select { padding: 6px; margin: 5px 5px 5px 0; }
+    .edit-btn, .delete-btn, .install-btn, .history-btn { cursor: pointer; color: blue; }
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); justify-content: center; align-items: center;
+    }
+    .modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  min-width: 300px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+  </style>
 </head>
+
 <body>
-
-<h2>Учет запчастей</h2>
-
-<div class="controls">
-    <input type="text" id="searchInput" placeholder="Поиск по любому полю">
-    <button class="btn" onclick="showAddForm()">Добавить новую</button>
-    <button class="btn" onclick="exportToExcel()">Выгрузить в Excel</button>
+<!-- Авторизація -->
+<div id="authScreen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10000;">
+  <h2>Введіть пароль для входу</h2>
+  <input type="password" id="authInput" placeholder="Пароль">
+  <button onclick="checkPassword()">Увійти</button>
+  <p id="authMessage" style="color:red; margin-top:10px;"></p>
 </div>
+
+<h2>Склад зберігання запчастин</h2>
+<input type="text" id="searchInput" placeholder="Пошук..." oninput="renderTable()">
+<button onclick="toggleForm()">Додати нову</button>
+<button onclick="openTechManager()">Управління технікою</button>
+<button onclick="exportToExcel()">📤 Експорт складу</button>
+<button onclick="exportTechPark()">📤 Експорт техніки</button>
+<button onclick="refreshData()">🔄 Оновити дані</button>
+<button onclick="logout()">🚪 Вийти</button>
 
 <table id="partsTable">
-    <thead>
-        <tr>
-            <th>№</th>
-            <th>Каталожный номер</th>
-            <th>Наименование</th>
-            <th>Количество</th>
-            <th>Борт № комбайна</th>
-            <th>Оригинал/Аналог</th>
-            <th>Действие</th>
-        </tr>
-    </thead>
-    <tbody></tbody>
+  <thead>
+    <tr>
+      <th>№</th>
+      <th>Каталожний номер</th>
+      <th>№ не оригінал</th>
+      <th>Найменування</th>
+      <th>Кількість</th>
+      <th>Місце зберігання</th>
+      <th>Дата надходження</th>
+      <th>Дата встановлення</th>
+      <th>Дії</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
 </table>
 
-<form id="addForm">
-    <input type="text" id="catalogNumber" placeholder="Каталожный номер" required>
-    <input type="text" id="name" placeholder="Наименование" required>
-    <input type="number" id="quantity" placeholder="Количество" required min="1">
-    <select id="machineNumber">
-        <option value="К2">К2</option>
-        <option value="К3">К3</option>
-        <option value="К4">К4</option>
-        <option value="К5">К5</option>
-        <option value="К6">К6</option>
-        <option value="К7">К7</option>
-        <option value="К8">К8</option>
-        <option value="К9">К9</option>
-        <option value="К10">К10</option>
-    </select>
-    <select id="type">
-        <option value="Оригинал">Оригинал</option>
-        <option value="Аналог">Аналог</option>
-    </select>
-    <button type="submit" class="btn">Сохранить</button>
-    <button type="button" class="btn" onclick="cancelForm()">Отмена</button>
-</form>
-
-<div class="history-buttons">
-    <h3>История по комбайнам:</h3>
-    <div>
-        <button class="btn" onclick="toggleHistory('К2')">К2</button>
-        <button class="btn" onclick="toggleHistory('К3')">К3</button>
-        <button class="btn" onclick="toggleHistory('К4')">К4</button>
-        <button class="btn" onclick="toggleHistory('К5')">К5</button>
-        <button class="btn" onclick="toggleHistory('К6')">К6</button>
-        <button class="btn" onclick="toggleHistory('К7')">К7</button>
-        <button class="btn" onclick="toggleHistory('К8')">К8</button>
-        <button class="btn" onclick="toggleHistory('К9')">К9</button>
-        <button class="btn" onclick="toggleHistory('К10')">К10</button>
-    </div>
-    <div id="machineTitle" class="machineTitle" style="display: none;"></div>
-    <table id="historyTable" style="display:none;">
-        <thead>
-            <tr>
-                <th>№</th>
-                <th>Каталожный номер</th>
-                <th>Наименование</th>
-                <th>Количество</th>
-                <th>Оригинал/Аналог</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+<!-- Форма додавання -->
+<div id="formRow" style="display:none;">
+  <input id="catalog" placeholder="Каталожний номер" autofocus>
+  <input id="altCatalog" placeholder="№ не оригінал">
+  <input id="name" placeholder="Найменування">
+  <input type="number" id="quantity" placeholder="Кількість" min="1">
+  <input id="location" placeholder="Місце зберігання">
+  <input id="supplier" placeholder="Постачальник">
+  <input type="date" id="installed">
+  <button onclick="saveEntry()">Зберегти</button>
 </div>
 
+<!-- Блок встановлення -->
+<div id="installBlock" style="display:none; margin:20px 0; padding:10px; border:1px solid #ccc;">
+  <strong>Встановлення запчастини:</strong><br>
+  <label>Кількість:</label>
+  <input type="number" id="installQty" min="1" placeholder="Скільки встановити?">
+  <label>Група техніки:</label>
+  <select id="installGroup" onchange="updateTechOptions()">
+    <option value="">-- виберіть групу --</option>
+    <option value="Трактор">Трактор</option>
+    <option value="Комбайн">Комбайн</option>
+    <option value="Оприскувач">Оприскувач</option>
+    <option value="Сівалка">Сівалка</option>
+    <option value="Жатки">Жатки</option>
+  <option value="Автомобілі">Автомобілі</option>
+  <option value="Грунтообробна">Грунтообробна</option>
+    <option value="Інше">Інше</option>
+  </select>
+  <label>Техніка:</label>
+  <select id="installTech">
+    <option value="">-- виберіть техніку --</option>
+  </select>
+  <button onclick="confirmInstall()">Підтвердити встановлення</button>
+  <button onclick="cancelInstall()">Відміна</button>
+</div>
+
+<!-- Модальне управління технікою -->
+<div class="modal" id="techModal">
+ <div class="modal-content">
+  <h3>Управління технікою</h3>
+
+  <label>Група:</label>
+  <select id="groupSelect" onchange="renderTechList()">
+    <option value="Трактор">Трактор</option>
+    <option value="Комбайн">Комбайн</option>
+    <option value="Оприскувач">Оприскувач</option>
+    <option value="Сівалка">Сівалка</option>
+    <option value="Жатки">Жатки</option>
+  <option value="Автомобілі">Автомобілі</option>
+  <option value="Грунтообробна">Грунтообробна</option>
+    <option value="Інше">Інше</option>
+  </select>
+
+  <table style="width:100%; margin-top:10px; border-collapse: collapse;" border="1">
+    <thead>
+      <tr>
+        <th>Назва</th>
+        <th>Внутр. номер</th>
+        <th>Оператор</th>
+        <th>❌</th>
+      </tr>
+    </thead>
+    <tbody id="techList"></tbody>
+  </table>
+
+  <div style="margin-top:10px;">
+    <input id="newTechName" placeholder="Назва">
+   
+    <input id="newTechInternal" placeholder="Внутр. номер">
+    <input id="newTechOperator" placeholder="Оператор">
+    <button onclick="addTech()">Додати</button>
+    <button onclick="closeTechManager()">Закрити</button>
+  </div>
+</div>
+
+</div>
+
+<!-- Історія встановлення -->
+<h3>Історія встановлення</h3>
+<input type="text" id="historySearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderHistory()">
+<button onclick="toggleHistory()">📜 Показати/сховати історію встановлення</button>
+<button onclick="toggleInstallExport()">📤 Експорт встановлень по даті</button>
+<div id="installExportBlock" style="display:none; margin: 10px 0;">
+  <label>З:</label>
+  <input type="date" id="installFrom">
+  <label>По:</label>
+  <input type="date" id="installTo">
+  <button onclick="exportFilteredInstallations()">📤 Виконати експорт</button>
+</div>
+
+  <button onclick="clearInstallHistory()">🧹 Очистити історію встановлення</button>
+
+</div>
+<table id="historyTable" style="display:none;">
+  <thead>
+    <tr>
+      <th>Каталожний номер</th>
+      <th>№ не оригінал</th>
+      <th>Найменування</th>
+      <th>Кількість</th>
+      <th>Дата встановлення</th>
+      <th>Техніка</th>
+      <th>Внутр. номер</th>
+<th>Оператор</th>
+    </tr>
+  </thead>
+  <tbody id="historyBody"></tbody>
+</table>
+
+<!-- Історія надходжень -->
+<h3>Історія надходжень</h3>
+<input type="text" id="arrivalSearchInput" placeholder="Пошук по каталожному номеру або найменуванню" oninput="renderArrivalHistory()">
+<button onclick="toggleArrivalHistory()">📥 Показати/сховати історію надходжень</button>
+<button onclick="toggleArrivalExport()">📤 Експорт надходжень по даті</button>
+<div id="arrivalExportBlock" style="display:none; margin: 10px 0;">
+  <label>З:</label>
+  <input type="date" id="arrivalFrom">
+  <label>По:</label>
+  <input type="date" id="arrivalTo">
+  <button onclick="exportFilteredArrivals()">📤 Виконати експорт</button>
+</div>
+
+  <button onclick="clearArrivalHistory()">🧹 Очистити історію надходжень</button>
+
+</div>
+<table id="arrivalHistoryTable" style="display:none;">
+  <thead>
+    <tr>
+      <th>Каталожний номер</th>
+      <th>№ не оригінал</th>
+      <th>Найменування</th>
+      <th>Кількість</th>
+      <th>Дата надходження</th>
+      <th>Місце зберігання</th>
+      <th>Постачальник</th>
+    </tr>
+  </thead>
+  <tbody id="arrivalBody"></tbody>
+</table>
+
+<!-- Основний скрипт піде в наступній частині! -->
 <script>
-    const addForm = document.getElementById('addForm');
-    const tableBody = document.querySelector('#partsTable tbody');
-    const historyTable = document.getElementById('historyTable');
-    const historyBody = historyTable.querySelector('tbody');
-    const machineTitle = document.getElementById('machineTitle');
-    const searchInput = document.getElementById('searchInput');
-    const catalogInput = document.getElementById('catalogNumber');
-    const nameInput = document.getElementById('name');
-    const quantityInput = document.getElementById('quantity');
-    const machineNumberSelect = document.getElementById('machineNumber');
+// --- Firebase Ініціалізація ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDcUKoOroCPgK2tg_zBv9WIji2VYsUTCZU",
+  authDomain: "sklad-c6daf.firebaseapp.com",
+  databaseURL: "https://sklad-c6daf-default-rtdb.europe-west1.firebasedatabase.app/",
+  projectId: "sklad-c6daf",
+  storageBucket: "sklad-c6daf.appspot.com",
+  messagingSenderId: "1033169323962",
+  appId: "1:1033169323962:web:73dd54812574d48aeabf83"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-    let parts = [];
-    let entries = [];
-    let editIndex = -1;
-    let visibleHistory = null;
+// --- Глобальні змінні ---
+let partsData = [];
+let techGroups = {};
+let historyLog = [];
+let arrivalLog = [];
+let editIndex = null;
+let currentInstallIndex = null;
+let historyVisible = false;
+let arrivalVisible = false;
 
-    window.onload = () => {
-        const savedParts = localStorage.getItem('parts');
-        const savedEntries = localStorage.getItem('entries');
-        if (savedParts) parts = JSON.parse(savedParts);
-        if (savedEntries) entries = JSON.parse(savedEntries);
-        renderTable();
-    };
+// --- Авторизація ---
+function checkPassword() {
+  const input = document.getElementById("authInput").value;
+  if (input === "Kuznetsov0104") {
+    localStorage.setItem("authPassed", "true");
+    document.getElementById("authScreen").style.display = "none";
+  } else {
+    document.getElementById("authMessage").textContent = "В доступі відмовлено!";
+  }
+}
 
-    function saveToLocal() {
-        localStorage.setItem('parts', JSON.stringify(parts));
-        localStorage.setItem('entries', JSON.stringify(entries));
+function logout() {
+  localStorage.removeItem("authPassed");
+  location.reload();
+}
+
+// --- Завантаження при старті ---
+window.onload = async () => {
+  if (localStorage.getItem("authPassed") === "true") {
+    document.getElementById("authScreen").style.display = "none";
+  }
+
+  await loadFromFirebase(); // ✅ partsData вже є
+
+  // --- Автозаповнення найменування за каталожним номером ---
+  document.getElementById("catalog").addEventListener("input", function () {
+    const catalogInput = this.value.trim().toLowerCase();
+    const found = partsData.find(p => p.catalog.toLowerCase() === catalogInput);
+    if (found) {
+      document.getElementById("name").value = found.name;
+    } else {
+      document.getElementById("name").value = "";
     }
+  });
+};
 
-    function showAddForm() {
-        addForm.style.display = 'block';
-        editIndex = -1;
-        addForm.reset();
-        catalogInput.focus();
+
+// --- Збереження та завантаження з Firebase ---
+async function saveToFirebase() {
+  await db.ref('warehouse').set({ partsData, techGroups, historyLog, arrivalLog });
+}
+
+async function loadFromFirebase() {
+  return db.ref('warehouse').once('value').then(snapshot => {
+    const data = snapshot.val();
+    if (data) {
+      partsData = data.partsData || [];
+      techGroups = data.techGroups || {};
+      historyLog = data.historyLog || [];
+      arrivalLog = data.arrivalLog || [];
     }
+    renderTable();
+    renderHistory();
+    renderArrivalHistory();
+  });
+}
 
-    function cancelForm() {
-        addForm.reset();
-        addForm.style.display = 'none';
+function refreshData() {
+  loadFromFirebase();
+  alert("Дані оновлені! ✅");
+}
+// --- Форма додавання ---
+function toggleForm(force = null) {
+  const form = document.getElementById("formRow");
+  if (force === true) {
+    form.style.display = "block";
+    clearForm();
+  } else if (force === false) {
+    form.style.display = "none";
+  } else {
+    form.style.display = (form.style.display === "none") ? "block" : "none";
+    if (form.style.display === "block") clearForm();
+  }
+}
+
+function clearForm() {
+  document.getElementById("catalog").value = "";
+  document.getElementById("altCatalog").value = ""; // 🆕 ДОДАЙ ЦЕЙ РЯДОК
+  document.getElementById("name").value = "";
+  document.getElementById("quantity").value = "";
+  document.getElementById("location").value = "";
+  document.getElementById("supplier").value = "";
+  document.getElementById("installed").value = "";
+  document.getElementById("catalog").focus();
+}
+
+async function saveEntry() {
+  const name = document.getElementById("name").value.trim();
+  const catalog = document.getElementById("catalog").value.trim();
+  const altCatalog = document.getElementById("altCatalog").value.trim();  // 🆕 додано
+  const quantity = parseInt(document.getElementById("quantity").value.trim());
+  const location = document.getElementById("location").value.trim();
+  const supplier = document.getElementById("supplier").value.trim();
+  const installed = document.getElementById("installed").value;
+
+  if (!name || !catalog || isNaN(quantity) || quantity <= 0 || !location || !supplier) {
+    alert("Заповніть всі поля правильно!");
+    return;
+  }
+
+  const now = new Date();
+  const arrival = now.toLocaleDateString("uk-UA");
+  const entry = { name, catalog, altCatalog, quantity, location, installed, arrival, supplier };  // 🆕 додано altCatalog
+
+  const existing = partsData.find(p => p.catalog.toLowerCase() === catalog.toLowerCase());
+  if (existing) {
+    existing.quantity += quantity;
+    existing.arrival = arrival;
+  } else {
+    partsData.push(entry);
+  }
+
+  arrivalLog.push({
+    catalog,
+    altCatalog,  // 🆕 додано altCatalog в історію надходжень
+    name,
+    qty: quantity,
+    date: arrival,
+    location,
+    supplier
+  });
+
+  await saveToFirebase();
+  renderTable();
+  renderArrivalHistory();
+  clearForm();
+  alert("Запчастину збережено!");
+}
+
+
+// --- Побудова таблиці складу ---
+function renderTable() {
+  const tbody = document.querySelector("#partsTable tbody");
+  tbody.innerHTML = "";
+  const filter = document.getElementById("searchInput").value.toLowerCase();
+  let counter = 1;
+
+  partsData.forEach((item, index) => {
+    if (item.quantity > 0 &&
+      (item.name.toLowerCase().includes(filter) ||
+       item.catalog.toLowerCase().includes(filter) ||
+       item.location.toLowerCase().includes(filter))) {
+      const row = tbody.insertRow();
+      row.insertCell(0).textContent = counter++;
+      row.insertCell(1).textContent = item.catalog;
+      row.insertCell(2).textContent = item.altCatalog || "";
+      row.insertCell(3).textContent = item.name;
+      row.insertCell(4).textContent = item.quantity;
+      row.insertCell(5).textContent = item.location;
+      row.insertCell(6).textContent = item.arrival;
+      row.insertCell(7).textContent = item.installed || "";
+      row.insertCell(8).innerHTML = `
+  <span class="install-btn" onclick="startInstall(${index})">🛠</span> |
+  <span class="edit-btn" onclick="editLocation(${index})">✏️</span> |
+  <span class="delete-btn" onclick="deleteRow(${index})">🗑</span>
+`;
     }
+  });
+}
+// --- Почати встановлення ---
+function startInstall(index) {
+  currentInstallIndex = index;
+  const block = document.getElementById("installBlock");
+  document.getElementById("installQty").value = "";
+  document.getElementById("installGroup").value = "";
+  document.getElementById("installTech").innerHTML = '<option value="">-- виберіть техніку --</option>';
+  block.style.display = "block";
+  document.getElementById("installQty").focus();
+}
 
-    catalogInput.addEventListener('input', () => {
-        const match = parts.find(p => p.catalogNumber === catalogInput.value);
-        if (match) {
-            nameInput.value = match.name;
-        }
+// --- Скасувати встановлення ---
+function cancelInstall() {
+  document.getElementById("installBlock").style.display = "none";
+  currentInstallIndex = null;
+}
+
+// --- Підтвердити встановлення ---
+async function confirmInstall() {
+  const qty = parseInt(document.getElementById("installQty").value.trim());
+  const group = document.getElementById("installGroup").value;
+  const tech = document.getElementById("installTech").value;
+
+  if (!currentInstallIndex && currentInstallIndex !== 0) {
+    alert("Не вибрано запчастину!");
+    return;
+  }
+
+  if (isNaN(qty) || qty <= 0) {
+    alert("Введіть коректну кількість!");
+    return;
+  }
+  if (!group || !tech) {
+    alert("Оберіть групу та техніку!");
+    return;
+  }
+
+  const item = partsData[currentInstallIndex];
+  if (item.quantity < qty) {
+    alert("Недостатня кількість на складі!");
+    return;
+  }
+
+  item.quantity -= qty;
+  const installDate = new Date().toLocaleDateString("uk-UA");
+  item.installed = installDate;
+
+ const groupList = techGroups[group] || [];
+const techObj = groupList.find(t => t.name === tech) || {};
+
+historyLog.push({
+  catalog: item.catalog,
+  altCatalog: item.altCatalog || "",  // 🆕 додано
+  name: item.name,
+  qty,
+  date: installDate,
+  tech,
+  internal: techObj.internal || "",  // якщо ти вже додав це раніше
+  operator: techObj.operator || ""
+});
+
+
+
+  currentInstallIndex = null;
+  document.getElementById("installBlock").style.display = "none";
+  await saveToFirebase();
+  renderTable();
+  renderHistory();
+  alert("Встановлення записано! ✅");
+}
+
+// --- Видалення запчастини ---
+async function deleteRow(index) {
+  const item = partsData[index];
+  const confirmDelete = confirm(`Ви впевнені, що хочете видалити запчастину: ${item.name}?`);
+  if (!confirmDelete) return;
+
+  partsData.splice(index, 1);
+  await saveToFirebase();
+  renderTable();
+}
+// --- Відкрити модальне вікно управління технікою ---
+function openTechManager() {
+  document.getElementById("techModal").style.display = "flex";
+  renderTechList();
+}
+
+// --- Закрити модальне вікно ---
+function closeTechManager() {
+  document.getElementById("techModal").style.display = "none";
+}
+
+// --- Додати техніку як об'єкт ---
+async function addTech() {
+  const group = document.getElementById("groupSelect").value;
+  const name = document.getElementById("newTechName").value.trim();
+  
+  const internal = document.getElementById("newTechInternal").value.trim();
+  const operator = document.getElementById("newTechOperator").value.trim();
+
+  if (!group || !name) {
+    alert("Назва та група обов'язкові!");
+    return;
+  }
+
+  const newItem = { name, internal, operator };
+
+  techGroups[group] = techGroups[group] || [];
+
+  const duplicate = techGroups[group].some(t => t.name.toLowerCase() === name.toLowerCase());
+  if (duplicate) {
+    alert("Техніка з такою назвою вже існує!");
+    return;
+  }
+
+  techGroups[group].push(newItem);
+
+  document.getElementById("newTechName").value = "";
+ 
+  document.getElementById("newTechInternal").value = "";
+  document.getElementById("newTechOperator").value = "";
+
+  await saveToFirebase();
+  renderTechList();
+}
+
+// --- Відобразити список техніки у вигляді таблиці ---
+function renderTechList() {
+  const group = document.getElementById("groupSelect").value;
+  const tbody = document.getElementById("techList");
+  tbody.innerHTML = "";
+
+  const list = techGroups[group] || [];
+  list.forEach((tech, i) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+  <td>${tech.name}</td>
+  <td>${tech.internal || ""}</td>
+  <td><span class="edit-btn" onclick="editOperator('${group}', ${i})">${tech.operator || "(редагувати)"}</span></td>
+  <td><button style="color:red;" onclick="deleteTech('${group}', ${i})">✖</button></td>
+`;
+
+    tbody.appendChild(row);
+  });
+}
+
+// --- Видалити техніку ---
+async function deleteTech(group, index) {
+  if (!confirm("Видалити цю техніку?")) return;
+  techGroups[group].splice(index, 1);
+  await saveToFirebase();
+  renderTechList();
+}
+
+// --- Оновити список техніки у встановленні (випадаючий список) ---
+function updateTechOptions() {
+  const group = document.getElementById("installGroup").value;
+  const techSelect = document.getElementById("installTech");
+  techSelect.innerHTML = '<option value="">-- виберіть техніку --</option>';
+
+  const list = techGroups[group] || [];
+  list.forEach(item => {
+    const opt = document.createElement("option");
+    opt.value = item.name;
+    const internal = item.internal ? item.internal : "без №";
+    const operator = item.operator ? item.operator : "без оператора";
+    opt.textContent = `${item.name} (${internal}, ${operator})`;
+    techSelect.appendChild(opt);
+  });
+}
+
+
+// --- Показати/сховати історію встановлення ---
+function toggleHistory() {
+  historyVisible = !historyVisible;
+  document.getElementById("historyTable").style.display = historyVisible ? "table" : "none";
+}
+
+// --- Побудова історії встановлення ---
+function renderHistory() {
+  const tbody = document.getElementById("historyBody");
+  const filter = document.getElementById("historySearchInput").value.toLowerCase();
+  tbody.innerHTML = "";
+
+  historyLog.forEach(entry => {
+    if (
+      entry.catalog.toLowerCase().includes(filter) ||
+      (entry.name && entry.name.toLowerCase().includes(filter))
+    ) {
+      const row = tbody.insertRow();
+      row.insertCell(0).textContent = entry.catalog;
+      row.insertCell(1).textContent = entry.altCatalog || "";
+      row.insertCell(2).textContent = entry.name;
+      row.insertCell(3).textContent = entry.qty;
+      row.insertCell(4).textContent = entry.date;
+      row.insertCell(5).textContent = entry.tech;
+      row.insertCell(6).textContent = entry.internal || "";
+      row.insertCell(7).textContent = entry.operator || "";
+    }
+  });
+}
+
+
+// --- Показати/сховати історію надходжень ---
+function renderArrivalHistory() {
+  const tbody = document.getElementById("arrivalBody");
+  const filter = document.getElementById("arrivalSearchInput").value.toLowerCase();
+  tbody.innerHTML = "";
+
+  arrivalLog.forEach(entry => {
+    if (
+      entry.catalog.toLowerCase().includes(filter) ||
+      (entry.name && entry.name.toLowerCase().includes(filter))
+    ) {
+      const row = tbody.insertRow();
+      row.insertCell(0).textContent = entry.catalog;
+      row.insertCell(1).textContent = entry.altCatalog || "";
+      row.insertCell(2).textContent = entry.name;
+      row.insertCell(3).textContent = entry.qty;
+      row.insertCell(4).textContent = entry.date;
+      row.insertCell(5).textContent = entry.location;
+      row.insertCell(6).textContent = entry.supplier;
+    }
+  });
+}
+
+// --- Експорт складу у Excel ---
+function exportToExcel() {
+const exportData = partsData
+  .filter(p => p && p.catalog && p.name && p.quantity > 0) // 💡 прибираємо неправильні обʼєкти
+  .map(p => ({
+    "Каталожний номер": p.catalog,
+    "№ не оригінал": p.altCatalog || "",
+    "Найменування": p.name,
+    "Кількість": p.quantity,
+    "Місце зберігання": p.location,
+    "Дата надходження": p.arrival,
+    "Дата встановлення": p.installed || "",
+    "Постачальник": p.supplier
+  }));
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Склад");
+  XLSX.writeFile(workbook, "склад.xlsx");
+}
+
+
+// --- Експорт парку техніки у Excel ---
+function exportTechPark() {
+  const exportData = [];
+
+  for (const group in techGroups) {
+    techGroups[group].forEach(tech => {
+      exportData.push({
+        "Група": group,
+        "Назва": tech.name || "",
+        "Внутр. номер": tech.internal || "",
+        "Оператор": tech.operator || ""
+      });
     });
+  }
 
-    addForm.addEventListener('submit', function(e) {
-        e.preventDefault();
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Техніка");
+  XLSX.writeFile(workbook, "техніка.xlsx");
+}
 
-        const catalogNumber = catalogInput.value;
-        const name = nameInput.value;
-        const quantity = parseInt(quantityInput.value);
-        const machineNumber = machineNumberSelect.value;
-        const type = document.getElementById('type').value;
 
-        if (quantity <= 0) {
-            alert('Количество должно быть больше нуля');
-            return;
-        }
+// --- Експорт встановлень по діапазону дат ---
+function exportFilteredInstallations() {
+  const from = new Date(document.getElementById("installFrom").value);
+  const to = new Date(document.getElementById("installTo").value);
+  if (isNaN(from) || isNaN(to)) {
+    alert("Оберіть діапазон дат!");
+    return;
+  }
 
-        entries.push({ catalogNumber, name, quantity, machineNumber, type });
+  const filtered = historyLog.filter(entry => {
+    const entryDate = new Date(entry.date.split('.').reverse().join('-'));
+    return entryDate >= from && entryDate <= to;
+  });
 
-        const existing = parts.find(p => p.catalogNumber === catalogNumber);
+ const exportData = filtered.map(e => ({
+  "Каталожний номер": e.catalog,
+   "№ не оригінал": e.altCatalog || "",
+  "Найменування": e.name,
+  "Кількість": e.qty,
+  "Дата встановлення": e.date,
+  "Техніка": e.tech,
+  "Внутр. номер": e.internal || "",
+  "Оператор": e.operator || ""
+}));
 
-        if (existing && editIndex === -1) {
-            existing.quantity = parseInt(existing.quantity) + quantity;
-            if (!existing.machineNumber.includes(machineNumber)) {
-                existing.machineNumber += `, ${machineNumber}`;
-            }
-            existing.type = type;
-        } else if (editIndex > -1) {
-            parts[editIndex] = { catalogNumber, name, quantity, machineNumber, type };
-        } else {
-            parts.push({ catalogNumber, name, quantity, machineNumber, type });
-        }
 
-        editIndex = -1;
-        addForm.reset();
-        catalogInput.focus();
-        renderTable();
-    });
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Встановлення");
+  XLSX.writeFile(workbook, "встановлення_по_даті.xlsx");
+}
 
-    function deleteRow(index) {
-        parts.splice(index, 1);
-        renderTable();
-    }
 
-    function editRow(index) {
-        const part = parts[index];
-        catalogInput.value = part.catalogNumber;
-        nameInput.value = part.name;
-        quantityInput.value = part.quantity;
-        machineNumberSelect.value = part.machineNumber.split(', ')[0];
-        document.getElementById('type').value = part.type;
+// --- Експорт надходжень по діапазону дат ---
+function exportFilteredArrivals() {
+  const from = new Date(document.getElementById("arrivalFrom").value);
+  const to = new Date(document.getElementById("arrivalTo").value);
+  if (isNaN(from) || isNaN(to)) {
+    alert("Оберіть діапазон дат!");
+    return;
+  }
 
-        addForm.style.display = 'block';
-        catalogInput.focus();
-        editIndex = index;
-    }
+  const filtered = arrivalLog.filter(entry => {
+    const entryDate = new Date(entry.date.split('.').reverse().join('-'));
+    return entryDate >= from && entryDate <= to;
+  });
 
-    function renderTable() {
-        const filter = searchInput.value.toLowerCase();
-        tableBody.innerHTML = '';
+  const exportData = filtered.map(e => ({
+    "Каталожний номер": e.catalog,
+    "№ не оригінал": e.altCatalog || "",
+    "Найменування": e.name,
+    "Кількість": e.qty,
+    "Дата надходження": e.date,
+    "Місце зберігання": e.location,
+    "Постачальник": e.supplier
+  }));
 
-        parts.forEach((part, index) => {
-            const values = [
-                part.catalogNumber,
-                part.name,
-                part.quantity.toString(),
-                part.machineNumber,
-                part.type
-            ].map(v => v.toLowerCase());
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Надходження");
+  XLSX.writeFile(workbook, "надходження_по_даті.xlsx");
+}
 
-            if (values.some(v => v.includes(filter))) {
-                const row = tableBody.insertRow();
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${part.catalogNumber}</td>
-                    <td>${part.name}</td>
-                    <td>${part.quantity}</td>
-                    <td><span onclick="alert('Заказано для: ${part.machineNumber}')" style="color:blue; cursor:pointer; text-decoration:underline">${part.machineNumber}</span></td>
-                    <td>${part.type}</td>
-                    <td>
-                        <button class="btn btn-edit" onclick="editRow(${index})">Редактировать</button>
-                        <button class="btn btn-delete" onclick="deleteRow(${index})">Удалить</button>
-                    </td>
-                `;
-            }
-        });
-        saveToLocal();
-    }
+  // --- Очистити історію встановлення ---
+async function clearInstallHistory() {
+  if (!confirm("Ви впевнені, що хочете повністю очистити історію встановлення?")) return;
+  historyLog = [];
+  await saveToFirebase();
+  renderHistory();
+  alert("Історію встановлення очищено! ✅");
+}
 
-    function toggleHistory(machineNumber) {
-        if (visibleHistory === machineNumber) {
-            historyTable.style.display = 'none';
-            machineTitle.style.display = 'none';
-            visibleHistory = null;
-            return;
-        }
+// --- Очистити історію надходжень ---
+async function clearArrivalHistory() {
+  if (!confirm("Ви впевнені, що хочете повністю очистити історію надходжень?")) return;
+  arrivalLog = [];
+  await saveToFirebase();
+  renderArrivalHistory();
+  alert("Історію надходжень очищено! ✅");
+}
+// --- Функція перевірки PIN-коду ---
+function verifyPin() {
+  const pin = prompt("Введіть PIN-код:");
+  return pin === "0918";
+}
 
-        const filtered = entries.filter(e => e.machineNumber === machineNumber);
-        historyBody.innerHTML = '';
-        filtered.forEach((entry, index) => {
-            const row = historyBody.insertRow();
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${entry.catalogNumber}</td>
-                <td>${entry.name}</td>
-                <td>${entry.quantity}</td>
-                <td>${entry.type}</td>
-            `;
-        });
-        machineTitle.textContent = `История для комбайна: ${machineNumber}`;
-        machineTitle.style.display = 'block';
-        historyTable.style.display = 'table';
-        visibleHistory = machineNumber;
-    }
+// --- Очистити історію встановлення з PIN ---
+async function clearInstallHistory() {
+  if (!verifyPin()) {
+    alert("Невірний PIN-код!");
+    return;
+  }
+  if (!confirm("Ви впевнені, що хочете повністю очистити історію встановлення?")) return;
+  historyLog = [];
+  await saveToFirebase();
+  renderHistory();
+  alert("Історію встановлення очищено! ✅");
+}
 
-    searchInput.addEventListener('input', renderTable);
+// --- Очистити історію надходжень з PIN ---
+async function clearArrivalHistory() {
+  if (!verifyPin()) {
+    alert("Невірний PIN-код!");
+    return;
+  }
+  if (!confirm("Ви впевнені, що хочете повністю очистити історію надходжень?")) return;
+  arrivalLog = [];
+  await saveToFirebase();
+  renderArrivalHistory();
+  alert("Історію надходжень очищено! ✅");
+}
 
-    function exportToExcel() {
-        let table = '<table><tr><th>№</th><th>Каталожный номер</th><th>Наименование</th><th>Количество</th><th>Борт № комбайна</th><th>Оригинал/Аналог</th></tr>';
-        parts.forEach((part, index) => {
-            table += `<tr>
-                <td>${index + 1}</td>
-                <td>${part.catalogNumber}</td>
-                <td>${part.name}</td>
-                <td>${part.quantity}</td>
-                <td>${part.machineNumber}</td>
-                <td>${part.type}</td>
-            </tr>`;
-        });
-        table += '</table>';
+// --- Видалити запчастину з PIN ---
+async function deleteRow(index) {
+  if (!verifyPin()) {
+    alert("Невірний PIN-код!");
+    return;
+  }
+  const item = partsData[index];
+  if (!confirm(`Ви впевнені, що хочете видалити запчастину: ${item.name}?`)) return;
+  partsData.splice(index, 1);
+  await saveToFirebase();
+  renderTable();
+  alert("Запчастину видалено! ✅");
+}
+function toggleInstallExport() {
+  const block = document.getElementById("installExportBlock");
+  block.style.display = block.style.display === "none" ? "block" : "none";
+}
 
-        const BOM = '\uFEFF';
-        const blob = new Blob([BOM + table], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'zapchasti.xls';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
+function toggleArrivalExport() {
+  const block = document.getElementById("arrivalExportBlock");
+  block.style.display = block.style.display === "none" ? "block" : "none";
+}
+async function editLocation(index) {
+  const item = partsData[index];
+  const newLocation = prompt(`Редагувати місце зберігання для "${item.name}":`, item.location);
+  if (newLocation !== null && newLocation.trim() !== "") {
+    item.location = newLocation.trim();
+    await saveToFirebase();
+    renderTable();
+    alert("Місце зберігання оновлено ✅");
+  }
+}
+async function editOperator(group, index) {
+  const current = techGroups[group][index];
+  const newOp = prompt(`Редагувати оператора для "${current.name}":`, current.operator || "");
+  if (newOp !== null) {
+    current.operator = newOp.trim();
+    await saveToFirebase();
+    renderTechList();
+    alert("Оператора оновлено ✅");
+  }
+}
+function toggleArrivalHistory() {
+  arrivalVisible = !arrivalVisible;
+  document.getElementById("arrivalHistoryTable").style.display = arrivalVisible ? "table" : "none";
+}
+
 </script>
-
 </body>
 </html>
 
