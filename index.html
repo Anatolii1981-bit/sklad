@@ -226,31 +226,35 @@
     }
 
     searchInput.addEventListener('input', renderTable);
+function exportToExcel() {
+    let table = '<table><tr><th>№</th><th>Каталожный номер</th><th>Наименование</th><th>Количество</th><th>Борт № комбайна</th><th>Оригинал/Аналог</th></tr>';
+    parts.forEach((part, index) => {
+        table += `<tr>
+            <td>${index + 1}</td>
+            <td>${part.catalogNumber}</td>
+            <td>${part.name}</td>
+            <td>${part.quantity}</td>
+            <td>${part.machineNumber}</td>
+            <td>${part.type}</td>
+        </tr>`;
+    });
+    table += '</table>';
 
-    function exportToExcel() {
-        let table = '<table><tr><th>№</th><th>Каталожный номер</th><th>Наименование</th><th>Количество</th><th>Борт № комбайна</th><th>Оригинал/Аналог</th></tr>';
-        parts.forEach((part, index) => {
-            table += `<tr>
-                <td>${index + 1}</td>
-                <td>${part.catalogNumber}</td>
-                <td>${part.name}</td>
-                <td>${part.quantity}</td>
-                <td>${part.machineNumber}</td>
-                <td>${part.type}</td>
-            </tr>`;
-        });
-        table += '</table>';
+    // Добавляем BOM в начало, чтобы Excel понял UTF-8
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + table], { type: 'application/vnd.ms-excel;charset=utf-8;' });
 
-        const blob = new Blob([table], { type: 'application/vnd.ms-excel' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'zapchasti.xls';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'zapchasti.xls';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+   
 </script>
 
 </body>
