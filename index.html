@@ -29,10 +29,203 @@
     <button class="btn" onclick="exportToExcel()">Выгрузить в Excel</button>
 </div>
 
-<!-- остальной HTML остается без изменений -->
+<table id="partsTable">
+    <thead>
+        <tr>
+            <th>№</th>
+            <th>Каталожный номер</th>
+            <th>Наименование</th>
+            <th>Количество</th>
+            <th>Борт № комбайна</th>
+            <th>Оригинал/Аналог</th>
+            <th>Действие</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<form id="addForm">
+    <input type="text" id="catalogNumber" placeholder="Каталожный номер" required>
+    <input type="text" id="name" placeholder="Наименование" required>
+    <input type="number" id="quantity" placeholder="Количество" required>
+    <select id="machineNumber">
+        <option value="К2">К2</option>
+        <option value="К3">К3</option>
+        <option value="К4">К4</option>
+        <option value="К5">К5</option>
+        <option value="К6">К6</option>
+        <option value="К7">К7</option>
+        <option value="К8">К8</option>
+        <option value="К9">К9</option>
+        <option value="К10">К10</option>
+    </select>
+    <select id="type">
+        <option value="Оригинал">Оригинал</option>
+        <option value="Аналог">Аналог</option>
+    </select>
+    <button type="submit" class="btn">Сохранить</button>
+</form>
+
+<div class="history-buttons">
+    <h3>История по комбайнам:</h3>
+    <div>
+        <button class="btn" onclick="toggleHistory('К2')">К2</button>
+        <button class="btn" onclick="toggleHistory('К3')">К3</button>
+        <button class="btn" onclick="toggleHistory('К4')">К4</button>
+        <button class="btn" onclick="toggleHistory('К5')">К5</button>
+        <button class="btn" onclick="toggleHistory('К6')">К6</button>
+        <button class="btn" onclick="toggleHistory('К7')">К7</button>
+        <button class="btn" onclick="toggleHistory('К8')">К8</button>
+        <button class="btn" onclick="toggleHistory('К9')">К9</button>
+        <button class="btn" onclick="toggleHistory('К10')">К10</button>
+    </div>
+    <div id="machineTitle" class="machineTitle" style="display: none;"></div>
+    <table id="historyTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Каталожный номер</th>
+                <th>Наименование</th>
+                <th>Количество</th>
+                <th>Оригинал/Аналог</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
 
 <script>
-    // ...существующий код JS выше остаётся...
+    const addForm = document.getElementById('addForm');
+    const tableBody = document.querySelector('#partsTable tbody');
+    const historyTable = document.getElementById('historyTable');
+    const historyBody = historyTable.querySelector('tbody');
+    const machineTitle = document.getElementById('machineTitle');
+    const searchInput = document.getElementById('searchInput');
+    const catalogInput = document.getElementById('catalogNumber');
+    const nameInput = document.getElementById('name');
+    const machineNumberSelect = document.getElementById('machineNumber');
+
+    let parts = [];
+    let entries = [];
+    let editIndex = -1;
+    let visibleHistory = null;
+
+    function showAddForm() {
+        addForm.style.display = 'block';
+        editIndex = -1;
+        addForm.reset();
+        catalogInput.focus();
+    }
+
+    catalogInput.addEventListener('input', () => {
+        const match = parts.find(p => p.catalogNumber === catalogInput.value);
+        if (match) {
+            nameInput.value = match.name;
+        }
+    });
+
+    addForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const catalogNumber = catalogInput.value;
+        const name = nameInput.value;
+        const quantity = parseInt(document.getElementById('quantity').value);
+        const machineNumber = machineNumberSelect.value;
+        const type = document.getElementById('type').value;
+
+        entries.push({ catalogNumber, name, quantity, machineNumber, type });
+
+        const existing = parts.find(p => p.catalogNumber === catalogNumber);
+
+        if (existing && editIndex === -1) {
+            existing.quantity = parseInt(existing.quantity) + quantity;
+            if (!existing.machineNumber.includes(machineNumber)) {
+                existing.machineNumber += `, ${machineNumber}`;
+            }
+            existing.type = type;
+        } else if (editIndex > -1) {
+            parts[editIndex] = { catalogNumber, name, quantity, machineNumber, type };
+        } else {
+            parts.push({ catalogNumber, name, quantity, machineNumber, type });
+        }
+
+        editIndex = -1;
+        addForm.reset();
+        catalogInput.focus();
+        renderTable();
+    });
+
+    function deleteRow(index) {
+        parts.splice(index, 1);
+        renderTable();
+    }
+
+    function editRow(index) {
+        const part = parts[index];
+        catalogInput.value = part.catalogNumber;
+        nameInput.value = part.name;
+        document.getElementById('quantity').value = part.quantity;
+        machineNumberSelect.value = part.machineNumber.split(', ')[0];
+        document.getElementById('type').value = part.type;
+
+        addForm.style.display = 'block';
+        catalogInput.focus();
+        editIndex = index;
+    }
+
+    function renderTable() {
+        const filter = searchInput.value.toLowerCase();
+        tableBody.innerHTML = '';
+
+        parts.forEach((part, index) => {
+            if (
+                part.catalogNumber.toLowerCase().includes(filter) ||
+                part.name.toLowerCase().includes(filter)
+            ) {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${part.catalogNumber}</td>
+                    <td>${part.name}</td>
+                    <td>${part.quantity}</td>
+                    <td><span onclick="alert('Заказано для: ${part.machineNumber}')" style="color:blue; cursor:pointer; text-decoration:underline">${part.machineNumber}</span></td>
+                    <td>${part.type}</td>
+                    <td>
+                        <button class="btn btn-edit" onclick="editRow(${index})">Редактировать</button>
+                        <button class="btn btn-delete" onclick="deleteRow(${index})">Удалить</button>
+                    </td>
+                `;
+            }
+        });
+    }
+
+    function toggleHistory(machineNumber) {
+        if (visibleHistory === machineNumber) {
+            historyTable.style.display = 'none';
+            machineTitle.style.display = 'none';
+            visibleHistory = null;
+            return;
+        }
+
+        const filtered = entries.filter(e => e.machineNumber === machineNumber);
+        historyBody.innerHTML = '';
+        filtered.forEach((entry, index) => {
+            const row = historyBody.insertRow();
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${entry.catalogNumber}</td>
+                <td>${entry.name}</td>
+                <td>${entry.quantity}</td>
+                <td>${entry.type}</td>
+            `;
+        });
+        machineTitle.textContent = `История для комбайна: ${machineNumber}`;
+        machineTitle.style.display = 'block';
+        historyTable.style.display = 'table';
+        visibleHistory = machineNumber;
+    }
+
+    searchInput.addEventListener('input', renderTable);
 
     function exportToExcel() {
         let table = '<table><tr><th>№</th><th>Каталожный номер</th><th>Наименование</th><th>Количество</th><th>Борт № комбайна</th><th>Оригинал/Аналог</th></tr>';
@@ -62,3 +255,4 @@
 
 </body>
 </html>
+
