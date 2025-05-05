@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -8,7 +7,7 @@
         body { font-family: sans-serif; padding: 20px; }
         input, select, button { margin: 5px; padding: 5px; }
         table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding:  8px; text-align: left; vertical-align: top; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
         th { background-color: #eee; }
         .btn { padding: 5px 10px; cursor: pointer; }
         .btn-edit { background-color: #4CAF50; color: white; border: none; }
@@ -24,7 +23,7 @@
 <h2>Учет запчастей</h2>
 
 <div class="controls">
-    <input type="text" id="searchInput" placeholder="Поиск по каталожному номеру или наименованию">
+    <input type="text" id="searchInput" placeholder="Поиск по любому полю">
     <button class="btn" onclick="showAddForm()">Добавить новую</button>
     <button class="btn" onclick="exportToExcel()">Выгрузить в Excel</button>
 </div>
@@ -47,7 +46,7 @@
 <form id="addForm">
     <input type="text" id="catalogNumber" placeholder="Каталожный номер" required>
     <input type="text" id="name" placeholder="Наименование" required>
-    <input type="number" id="quantity" placeholder="Количество" required>
+    <input type="number" id="quantity" placeholder="Количество" required min="1">
     <select id="machineNumber">
         <option value="К2">К2</option>
         <option value="К3">К3</option>
@@ -64,6 +63,7 @@
         <option value="Аналог">Аналог</option>
     </select>
     <button type="submit" class="btn">Сохранить</button>
+    <button type="button" class="btn" onclick="cancelForm()">Отмена</button>
 </form>
 
 <div class="history-buttons">
@@ -103,6 +103,7 @@
     const searchInput = document.getElementById('searchInput');
     const catalogInput = document.getElementById('catalogNumber');
     const nameInput = document.getElementById('name');
+    const quantityInput = document.getElementById('quantity');
     const machineNumberSelect = document.getElementById('machineNumber');
 
     let parts = [];
@@ -110,11 +111,29 @@
     let editIndex = -1;
     let visibleHistory = null;
 
+    window.onload = () => {
+        const savedParts = localStorage.getItem('parts');
+        const savedEntries = localStorage.getItem('entries');
+        if (savedParts) parts = JSON.parse(savedParts);
+        if (savedEntries) entries = JSON.parse(savedEntries);
+        renderTable();
+    };
+
+    function saveToLocal() {
+        localStorage.setItem('parts', JSON.stringify(parts));
+        localStorage.setItem('entries', JSON.stringify(entries));
+    }
+
     function showAddForm() {
         addForm.style.display = 'block';
         editIndex = -1;
         addForm.reset();
         catalogInput.focus();
+    }
+
+    function cancelForm() {
+        addForm.reset();
+        addForm.style.display = 'none';
     }
 
     catalogInput.addEventListener('input', () => {
@@ -129,9 +148,14 @@
 
         const catalogNumber = catalogInput.value;
         const name = nameInput.value;
-        const quantity = parseInt(document.getElementById('quantity').value);
+        const quantity = parseInt(quantityInput.value);
         const machineNumber = machineNumberSelect.value;
         const type = document.getElementById('type').value;
+
+        if (quantity <= 0) {
+            alert('Количество должно быть больше нуля');
+            return;
+        }
 
         entries.push({ catalogNumber, name, quantity, machineNumber, type });
 
@@ -164,7 +188,7 @@
         const part = parts[index];
         catalogInput.value = part.catalogNumber;
         nameInput.value = part.name;
-        document.getElementById('quantity').value = part.quantity;
+        quantityInput.value = part.quantity;
         machineNumberSelect.value = part.machineNumber.split(', ')[0];
         document.getElementById('type').value = part.type;
 
@@ -178,10 +202,15 @@
         tableBody.innerHTML = '';
 
         parts.forEach((part, index) => {
-            if (
-                part.catalogNumber.toLowerCase().includes(filter) ||
-                part.name.toLowerCase().includes(filter)
-            ) {
+            const values = [
+                part.catalogNumber,
+                part.name,
+                part.quantity.toString(),
+                part.machineNumber,
+                part.type
+            ].map(v => v.toLowerCase());
+
+            if (values.some(v => v.includes(filter))) {
                 const row = tableBody.insertRow();
                 row.innerHTML = `
                     <td>${index + 1}</td>
@@ -197,6 +226,7 @@
                 `;
             }
         });
+        saveToLocal();
     }
 
     function toggleHistory(machineNumber) {
@@ -226,35 +256,32 @@
     }
 
     searchInput.addEventListener('input', renderTable);
-function exportToExcel() {
-    let table = '<table><tr><th>№</th><th>Каталожный номер</th><th>Наименование</th><th>Количество</th><th>Борт № комбайна</th><th>Оригинал/Аналог</th></tr>';
-    parts.forEach((part, index) => {
-        table += `<tr>
-            <td>${index + 1}</td>
-            <td>${part.catalogNumber}</td>
-            <td>${part.name}</td>
-            <td>${part.quantity}</td>
-            <td>${part.machineNumber}</td>
-            <td>${part.type}</td>
-        </tr>`;
-    });
-    table += '</table>';
 
-    // Добавляем BOM в начало, чтобы Excel понял UTF-8
-    const BOM = '\uFEFF';
-    const blob = new Blob([BOM + table], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    function exportToExcel() {
+        let table = '<table><tr><th>№</th><th>Каталожный номер</th><th>Наименование</th><th>Количество</th><th>Борт № комбайна</th><th>Оригинал/Аналог</th></tr>';
+        parts.forEach((part, index) => {
+            table += `<tr>
+                <td>${index + 1}</td>
+                <td>${part.catalogNumber}</td>
+                <td>${part.name}</td>
+                <td>${part.quantity}</td>
+                <td>${part.machineNumber}</td>
+                <td>${part.type}</td>
+            </tr>`;
+        });
+        table += '</table>';
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'zapchasti.xls';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-   
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + table], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'zapchasti.xls';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
 </script>
 
 </body>
