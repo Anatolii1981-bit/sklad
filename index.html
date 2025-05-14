@@ -244,49 +244,46 @@ let currentInstallIndex = null;
 let historyVisible = false;
 let arrivalVisible = false;
 
-function checkPassword() {
-  const input = document.getElementById("authInput").value;
-  if (input === "Kuznetsov0104") {
-    localStorage.setItem("authPassed", "true");
-    document.getElementById("authScreen").style.display = "none";
-  } else {
-    document.getElementById("authMessage").textContent = "В доступі відмовлено!";
-  }
-}
-
-
-function logout() {
-  localStorage.removeItem("authPassed");
-  location.reload();
-}
-
-// --- Завантаження при старті ---
-window.onload = async () => {
-  if (localStorage.getItem("authPassed") === "true") {
-    document.getElementById("authScreen").style.display = "none";
-  }
-  
-
-
-  await loadFromFirebase(); // ✅ partsData вже є
-
-  // --- Автозаповнення найменування за каталожним номером ---
-  document.getElementById("catalog").addEventListener("input", function () {
-    const catalogInput = this.value.trim().toLowerCase();
-    const found = partsData.find(p => p.catalog.toLowerCase() === catalogInput);
-    if (found) {
-      document.getElementById("name").value = found.name;
+<script>
+  // --- Авторизація ---
+  function checkPassword() {
+    const input = document.getElementById("authInput").value;
+    if (input === "Kuznetsov0104") {
+      localStorage.setItem("authPassed", "true");
+      document.getElementById("authScreen").style.display = "none";
     } else {
-      document.getElementById("name").value = "";
+      document.getElementById("authMessage").textContent = "В доступі відмовлено!";
     }
-  });
-};
- // --- Заміна коми на крапку у полі "Кількість"
-  document.getElementById("quantity").addEventListener("input", function () {
-    this.value = this.value.replace(",", ".");
-  });
-};
+  }
 
+  // --- Вихід ---
+  function logout() {
+    localStorage.removeItem("authPassed");
+    location.reload();
+  }
+
+  // --- onload ---
+  window.onload = async () => {
+    if (localStorage.getItem("authPassed") === "true") {
+      document.getElementById("authScreen").style.display = "none";
+    }
+
+    await loadFromFirebase();
+
+    document.getElementById("catalog").addEventListener("input", function () {
+      const catalogInput = this.value.trim().toLowerCase();
+      const found = partsData.find(p => p.catalog.toLowerCase() === catalogInput);
+      document.getElementById("name").value = found ? found.name : "";
+    });
+
+    const qtyInput = document.getElementById("quantity");
+    if (qtyInput) {
+      qtyInput.addEventListener("input", function () {
+        this.value = this.value.replace(",", ".");
+      });
+    }
+  };
+</script>
 
 // --- Збереження та завантаження з Firebase ---
 async function saveToFirebase() {
