@@ -264,10 +264,7 @@ window.onload = async () => {
   if (localStorage.getItem("authPassed") === "true") {
     document.getElementById("authScreen").style.display = "none";
   }
-  // --- Автоматична заміна коми на крапку у полі "Кількість"
-document.getElementById("quantity").addEventListener("input", function () {
-  this.value = this.value.replace(",", ".");
-});
+  
 
 
   await loadFromFirebase(); // ✅ partsData вже є
@@ -283,6 +280,10 @@ document.getElementById("quantity").addEventListener("input", function () {
     }
   });
 };
+  // --- Автоматична заміна коми на крапку у полі "Кількість"
+document.getElementById("quantity").addEventListener("input", function () {
+  this.value = this.value.replace(",", ".");
+});
 
 
 // --- Збереження та завантаження з Firebase ---
