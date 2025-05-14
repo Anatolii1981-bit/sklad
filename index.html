@@ -10,6 +10,8 @@
   
   <!-- XLSX -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
+
 
   <style>
     body { font-family: sans-serif; padding: 20px; }
@@ -52,6 +54,10 @@
 <button onclick="exportToExcel()">📤 Експорт складу</button>
 <button onclick="exportTechPark()">📤 Експорт техніки</button>
 <button onclick="refreshData()">🔄 Оновити дані</button>
+  <h3>📄 Імпорт з .docx-файлу</h3>
+<input type="file" id="docxInput" accept=".docx">
+<button onclick="handleDocxImport()">Імпортувати з Word</button>
+
 <button onclick="logout()">🚪 Вийти</button>
 
 <table id="partsTable">
@@ -831,6 +837,63 @@ async function editOperator(group, index) {
 function toggleArrivalHistory() {
   arrivalVisible = !arrivalVisible;
   document.getElementById("arrivalHistoryTable").style.display = arrivalVisible ? "table" : "none";
+}
+async function handleDocxImport() {
+  const fileInput = document.getElementById("docxInput");
+  const file = fileInput.files[0];
+  if (!file) {
+    alert("Оберіть .docx файл для імпорту.");
+    return;
+  }
+
+  const location = prompt("Введіть місце зберігання:");
+  if (!location) return alert("Місце зберігання обов'язкове!");
+
+  const supplier = prompt("Введіть постачальника:");
+  if (!supplier) return alert("Постачальник обов'язковий!");
+
+  const arrayBuffer = await file.arrayBuffer();
+
+  const result = await mammoth.extractRawText({ arrayBuffer });
+  const text = result.value;
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  const entries = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^\d+$/.test(lines[i])) continue; // шукаємо номер рядка: 1, 2, 3...
+
+    const article = lines[i + 1]?.trim();
+    const name = lines[i + 2]?.trim();
+    const qtyRaw = lines[i + 3]?.replace(",", ".");
+    const qty = parseFloat(qtyRaw);
+    const unit = lines[i + 4]?.trim();
+
+    if (!article || !name || isNaN(qty)) continue;
+
+    entries.push({
+      catalog: article,
+      altCatalog: "",
+      name,
+      quantity: qty,
+      location,
+      installed: "",
+      arrival: new Date().toLocaleDateString("uk-UA"),
+      supplier: `${supplier} (${unit})`
+    });
+  }
+
+  if (entries.length === 0) {
+    alert("Не знайдено жодного валідного запису.");
+    return;
+  }
+
+  partsData.push(...entries);
+  await saveToFirebase();
+  renderTable();
+  renderArrivalHistory();
+  alert(`Успішно імпортовано ${entries.length} записів ✅`);
+  fileInput.value = ""; // очистити файл
 }
 
 </script>
