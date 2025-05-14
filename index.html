@@ -82,7 +82,8 @@
   <input id="catalog" placeholder="Каталожний номер" autofocus>
   <input id="altCatalog" placeholder="№ не оригінал">
   <input id="name" placeholder="Найменування">
-  <input type="number" id="quantity" placeholder="Кількість" min="0.01" step="any">
+  <input type="text" id="quantity" placeholder="Кількість">
+
   <input id="location" placeholder="Місце зберігання">
   <input id="supplier" placeholder="Постачальник">
   <input type="date" id="installed">
@@ -280,10 +281,11 @@ window.onload = async () => {
     }
   });
 };
-  // --- Автоматична заміна коми на крапку у полі "Кількість"
-document.getElementById("quantity").addEventListener("input", function () {
-  this.value = this.value.replace(",", ".");
-});
+ // --- Заміна коми на крапку у полі "Кількість"
+  document.getElementById("quantity").addEventListener("input", function () {
+    this.value = this.value.replace(",", ".");
+  });
+};
 
 
 // --- Збереження та завантаження з Firebase ---
@@ -339,7 +341,8 @@ async function saveEntry() {
   const name = document.getElementById("name").value.trim();
   const catalog = document.getElementById("catalog").value.trim();
   const altCatalog = document.getElementById("altCatalog").value.trim();  // 🆕 додано
-  const quantity = parseInt(document.getElementById("quantity").value.trim());
+  const quantity = parseFloat(document.getElementById("quantity").value.trim());
+
   const location = document.getElementById("location").value.trim();
   const supplier = document.getElementById("supplier").value.trim();
   const installed = document.getElementById("installed").value;
