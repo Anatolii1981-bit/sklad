@@ -244,7 +244,6 @@ let currentInstallIndex = null;
 let historyVisible = false;
 let arrivalVisible = false;
 
-// --- Авторизація ---
 function checkPassword() {
   const input = document.getElementById("authInput").value;
   if (input === "Kuznetsov0104") {
@@ -254,6 +253,7 @@ function checkPassword() {
     document.getElementById("authMessage").textContent = "В доступі відмовлено!";
   }
 }
+
 
 function logout() {
   localStorage.removeItem("authPassed");
