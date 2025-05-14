@@ -329,7 +329,9 @@ async function saveEntry() {
   const name = document.getElementById("name").value.trim();
   const catalog = document.getElementById("catalog").value.trim();
   const altCatalog = document.getElementById("altCatalog").value.trim();  // 🆕 додано
- 
+ const quantityInput = document.getElementById("quantity").value.trim().replace(",", ".");
+const quantity = parseFloat(quantityInput);
+
   const quantity = parseFloat(document.getElementById("quantity").value.trim());
 
   const location = document.getElementById("location").value.trim();
@@ -419,6 +421,9 @@ function cancelInstall() {
 
 // --- Підтвердити встановлення ---
 async function confirmInstall() {
+  const qtyInput = document.getElementById("installQty").value.trim().replace(",", ".");
+const qty = parseFloat(qtyInput);
+
   const qty = parseFloat(document.getElementById("installQty").value.trim());
   const group = document.getElementById("installGroup").value;
   const tech = document.getElementById("installTech").value;
