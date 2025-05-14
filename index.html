@@ -76,7 +76,8 @@
   <input id="catalog" placeholder="Каталожний номер" autofocus>
   <input id="altCatalog" placeholder="№ не оригінал">
   <input id="name" placeholder="Найменування">
-  <input type="number" id="quantity" placeholder="Кількість" min="1">
+ <input type="number" id="quantity" placeholder="Кількість" min="0.01" step="0.01">
+
   <input id="location" placeholder="Місце зберігання">
   <input id="supplier" placeholder="Постачальник">
   <input type="date" id="installed">
@@ -87,7 +88,8 @@
 <div id="installBlock" style="display:none; margin:20px 0; padding:10px; border:1px solid #ccc;">
   <strong>Встановлення запчастини:</strong><br>
   <label>Кількість:</label>
-  <input type="number" id="installQty" min="1" placeholder="Скільки встановити?">
+  <input type="number" id="installQty" min="0.01" step="0.01" placeholder="Скільки встановити?">
+
   <label>Група техніки:</label>
   <select id="installGroup" onchange="updateTechOptions()">
     <option value="">-- виберіть групу --</option>
@@ -327,7 +329,9 @@ async function saveEntry() {
   const name = document.getElementById("name").value.trim();
   const catalog = document.getElementById("catalog").value.trim();
   const altCatalog = document.getElementById("altCatalog").value.trim();  // 🆕 додано
-  const quantity = parseInt(document.getElementById("quantity").value.trim());
+ 
+  const quantity = parseFloat(document.getElementById("quantity").value.trim());
+
   const location = document.getElementById("location").value.trim();
   const supplier = document.getElementById("supplier").value.trim();
   const installed = document.getElementById("installed").value;
@@ -415,7 +419,7 @@ function cancelInstall() {
 
 // --- Підтвердити встановлення ---
 async function confirmInstall() {
-  const qty = parseInt(document.getElementById("installQty").value.trim());
+  const qty = parseFloat(document.getElementById("installQty").value.trim());
   const group = document.getElementById("installGroup").value;
   const tech = document.getElementById("installTech").value;
 
@@ -440,24 +444,24 @@ async function confirmInstall() {
   }
 
   item.quantity -= qty;
+  item.quantity = parseFloat(item.quantity.toFixed(2)); // ✅ ОКРУГЛЕННЯ
+
   const installDate = new Date().toLocaleDateString("uk-UA");
   item.installed = installDate;
 
- const groupList = techGroups[group] || [];
-const techObj = groupList.find(t => t.name === tech) || {};
+  const groupList = techGroups[group] || [];
+  const techObj = groupList.find(t => t.name === tech) || {};
 
-historyLog.push({
-  catalog: item.catalog,
-  altCatalog: item.altCatalog || "",  // 🆕 додано
-  name: item.name,
-  qty,
-  date: installDate,
-  tech,
-  internal: techObj.internal || "",  // якщо ти вже додав це раніше
-  operator: techObj.operator || ""
-});
-
-
+  historyLog.push({
+    catalog: item.catalog,
+    altCatalog: item.altCatalog || "",
+    name: item.name,
+    qty,
+    date: installDate,
+    tech,
+    internal: techObj.internal || "",
+    operator: techObj.operator || ""
+  });
 
   currentInstallIndex = null;
   document.getElementById("installBlock").style.display = "none";
