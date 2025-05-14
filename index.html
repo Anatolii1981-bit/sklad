@@ -841,10 +841,7 @@ function toggleArrivalHistory() {
 async function handleDocxImport() {
   const fileInput = document.getElementById("docxInput");
   const file = fileInput.files[0];
-  if (!file) {
-    alert("Оберіть .docx файл для імпорту.");
-    return;
-  }
+  if (!file) return alert("Оберіть .docx файл для імпорту.");
 
   const location = prompt("Введіть місце зберігання:");
   if (!location) return alert("Місце зберігання обов'язкове!");
@@ -853,34 +850,39 @@ async function handleDocxImport() {
   if (!supplier) return alert("Постачальник обов'язковий!");
 
   const arrayBuffer = await file.arrayBuffer();
-
   const result = await mammoth.extractRawText({ arrayBuffer });
   const text = result.value;
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  const lines = text
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line !== "");
 
   const entries = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    if (!/^\d+$/.test(lines[i])) continue; // шукаємо номер рядка: 1, 2, 3...
-
-    const article = lines[i + 1]?.trim();
-    const name = lines[i + 2]?.trim();
-    const qtyRaw = lines[i + 3]?.replace(",", ".");
+  for (let i = 0; i < lines.length - 2; i++) {
+    const catalog = lines[i];
+    const name = lines[i + 1];
+    const qtyRaw = lines[i + 2].replace(",", ".");
     const qty = parseFloat(qtyRaw);
-    const unit = lines[i + 4]?.trim();
 
-    if (!article || !name || isNaN(qty)) continue;
+    if (
+      /^\d/.test(catalog) &&        // рядок починається з цифри (артикул)
+      name.length > 2 &&
+      !isNaN(qty)
+    ) {
+      entries.push({
+        catalog,
+        altCatalog: "",
+        name,
+        quantity: qty,
+        location,
+        installed: "",
+        arrival: new Date().toLocaleDateString("uk-UA"),
+        supplier
+      });
 
-    entries.push({
-      catalog: article,
-      altCatalog: "",
-      name,
-      quantity: qty,
-      location,
-      installed: "",
-      arrival: new Date().toLocaleDateString("uk-UA"),
-      supplier: `${supplier} (${unit})`
-    });
+      i += 2; // пропускаємо наступні два рядки, бо вони вже оброблені
+    }
   }
 
   if (entries.length === 0) {
@@ -892,8 +894,8 @@ async function handleDocxImport() {
   await saveToFirebase();
   renderTable();
   renderArrivalHistory();
-  alert(`Успішно імпортовано ${entries.length} записів ✅`);
-  fileInput.value = ""; // очистити файл
+  alert(`✅ Успішно імпортовано ${entries.length} записів`);
+  fileInput.value = "";
 }
 
 </script>
