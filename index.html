@@ -10,8 +10,6 @@
   
   <!-- XLSX -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <!-- Mammoth для читання .docx -->
-  <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
 
   <style>
     body { font-family: sans-serif; padding: 20px; }
@@ -55,10 +53,6 @@
 <button onclick="exportTechPark()">📤 Експорт техніки</button>
 <button onclick="refreshData()">🔄 Оновити дані</button>
 <button onclick="logout()">🚪 Вийти</button>
-  <!-- Імпорт з Word -->
-<input type="file" id="docxInput" accept=".docx" style="display:none" onchange="importFromDocx(this)">
-<button onclick="document.getElementById('docxInput').click()">📥 Імпорт з Word</button>
-
 
 <table id="partsTable">
   <thead>
@@ -82,8 +76,7 @@
   <input id="catalog" placeholder="Каталожний номер" autofocus>
   <input id="altCatalog" placeholder="№ не оригінал">
   <input id="name" placeholder="Найменування">
-  <input type="text" id="quantity" placeholder="Кількість">
-
+  <input type="number" id="quantity" placeholder="Кількість" min="1">
   <input id="location" placeholder="Місце зберігання">
   <input id="supplier" placeholder="Постачальник">
   <input type="date" id="installed">
@@ -244,45 +237,41 @@ let currentInstallIndex = null;
 let historyVisible = false;
 let arrivalVisible = false;
 
+// --- Авторизація ---
+function checkPassword() {
+  const input = document.getElementById("authInput").value;
+  if (input === "Kuznetsov0104") {
+    localStorage.setItem("authPassed", "true");
+    document.getElementById("authScreen").style.display = "none";
+  } else {
+    document.getElementById("authMessage").textContent = "В доступі відмовлено!";
+  }
+}
 
-  // --- Авторизація ---
-  function checkPassword() {
-    const input = document.getElementById("authInput").value;
-    if (input === "Kuznetsov0104") {
-      localStorage.setItem("authPassed", "true");
-      document.getElementById("authScreen").style.display = "none";
+function logout() {
+  localStorage.removeItem("authPassed");
+  location.reload();
+}
+
+// --- Завантаження при старті ---
+window.onload = async () => {
+  if (localStorage.getItem("authPassed") === "true") {
+    document.getElementById("authScreen").style.display = "none";
+  }
+
+  await loadFromFirebase(); // ✅ partsData вже є
+
+  // --- Автозаповнення найменування за каталожним номером ---
+  document.getElementById("catalog").addEventListener("input", function () {
+    const catalogInput = this.value.trim().toLowerCase();
+    const found = partsData.find(p => p.catalog.toLowerCase() === catalogInput);
+    if (found) {
+      document.getElementById("name").value = found.name;
     } else {
-      document.getElementById("authMessage").textContent = "В доступі відмовлено!";
+      document.getElementById("name").value = "";
     }
-  }
-
-  // --- Вихід ---
-  function logout() {
-    localStorage.removeItem("authPassed");
-    location.reload();
-  }
-
-  // --- onload ---
-  window.onload = async () => {
-    if (localStorage.getItem("authPassed") === "true") {
-      document.getElementById("authScreen").style.display = "none";
-    }
-
-    await loadFromFirebase();
-
-    document.getElementById("catalog").addEventListener("input", function () {
-      const catalogInput = this.value.trim().toLowerCase();
-      const found = partsData.find(p => p.catalog.toLowerCase() === catalogInput);
-      document.getElementById("name").value = found ? found.name : "";
-    });
-
-    const qtyInput = document.getElementById("quantity");
-    if (qtyInput) {
-      qtyInput.addEventListener("input", function () {
-        this.value = this.value.replace(",", ".");
-      });
-    }
-  };
+  });
+};
 
 
 // --- Збереження та завантаження з Firebase ---
@@ -338,8 +327,7 @@ async function saveEntry() {
   const name = document.getElementById("name").value.trim();
   const catalog = document.getElementById("catalog").value.trim();
   const altCatalog = document.getElementById("altCatalog").value.trim();  // 🆕 додано
-  const quantity = parseFloat(document.getElementById("quantity").value.trim());
-
+  const quantity = parseInt(document.getElementById("quantity").value.trim());
   const location = document.getElementById("location").value.trim();
   const supplier = document.getElementById("supplier").value.trim();
   const installed = document.getElementById("installed").value;
@@ -835,75 +823,9 @@ function toggleArrivalHistory() {
   arrivalVisible = !arrivalVisible;
   document.getElementById("arrivalHistoryTable").style.display = arrivalVisible ? "table" : "none";
 }
-  async function importFromDocx(input) {
-  const file = input.files[0];
-  if (!file) return;
-
-  const arrayBuffer = await file.arrayBuffer();
-  const result = await mammoth.convertToHtml({ arrayBuffer });
-  const container = document.createElement("div");
-  container.innerHTML = result.value;
-
-  const rows = container.querySelectorAll("table tr");
-  if (rows.length === 0) {
-    alert("Таблиця не знайдена в файлі!");
-    return;
-  }
-
-  let newParts = [];
-
-  rows.forEach((row, index) => {
-    if (index === 0) return; // Пропускаємо заголовок
-    const cells = row.querySelectorAll("td");
-    if (cells.length < 4) return;
-
-    const catalog = cells[1].textContent.trim();
-    const name = cells[2].textContent.trim();
-    const quantity = parseFloat(cells[3].textContent.trim().replace(",", "."));
-    if (!catalog || !name || isNaN(quantity)) return;
-
-    const arrival = new Date().toLocaleDateString("uk-UA");
-    const newEntry = {
-      name,
-      catalog,
-      altCatalog: "",
-      quantity,
-      location: "Імпорт",
-      installed: "",
-      arrival,
-      supplier: "Імпорт"
-    };
-
-    const existing = partsData.find(p => p.catalog.toLowerCase() === catalog.toLowerCase());
-    if (existing) {
-      existing.quantity += quantity;
-      existing.arrival = arrival;
-    } else {
-      partsData.push(newEntry);
-    }
-
-    arrivalLog.push({
-      catalog,
-      altCatalog: "",
-      name,
-      qty: quantity,
-      date: arrival,
-      location: "Імпорт",
-      supplier: "Імпорт"
-    });
-
-    newParts.push(newEntry);
-  });
-
-  await saveToFirebase();
-  renderTable();
-  renderArrivalHistory();
-  alert(`Імпортовано ${newParts.length} позицій з Word ✅`);
-  input.value = ""; // Скидаємо input
-}
-
 
 </script>
 </body>
 </html>
+
 
