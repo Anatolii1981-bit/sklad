@@ -184,6 +184,7 @@
       <th>Техніка</th>
       <th>Внутр. номер</th>
 <th>Оператор</th>
+       <th>❌</th>
     </tr>
   </thead>
   <tbody id="historyBody"></tbody>
@@ -215,6 +216,7 @@
       <th>Дата надходження</th>
       <th>Місце зберігання</th>
       <th>Постачальник</th>
+      <th>❌</th>
     </tr>
   </thead>
   <tbody id="arrivalBody"></tbody>
@@ -595,7 +597,7 @@ function renderHistory() {
   const filter = document.getElementById("historySearchInput").value.toLowerCase();
   tbody.innerHTML = "";
 
-  historyLog.forEach(entry => {
+  historyLog.forEach((entry, index) => {
     if (
       entry.catalog.toLowerCase().includes(filter) ||
       (entry.name && entry.name.toLowerCase().includes(filter))
@@ -609,9 +611,13 @@ function renderHistory() {
       row.insertCell(5).textContent = entry.tech;
       row.insertCell(6).textContent = entry.internal || "";
       row.insertCell(7).textContent = entry.operator || "";
+
+      const delCell = row.insertCell(8);
+      delCell.innerHTML = `<span class="delete-btn" onclick="deleteInstallRow(${index})">🗑</span>`;
     }
   });
 }
+
 
 
 // --- Показати/сховати історію надходжень ---
@@ -620,7 +626,7 @@ function renderArrivalHistory() {
   const filter = document.getElementById("arrivalSearchInput").value.toLowerCase();
   tbody.innerHTML = "";
 
-  arrivalLog.forEach(entry => {
+  arrivalLog.forEach((entry, index) => {
     if (
       entry.catalog.toLowerCase().includes(filter) ||
       (entry.name && entry.name.toLowerCase().includes(filter))
@@ -633,9 +639,13 @@ function renderArrivalHistory() {
       row.insertCell(4).textContent = entry.date;
       row.insertCell(5).textContent = entry.location;
       row.insertCell(6).textContent = entry.supplier;
+
+      const delCell = row.insertCell(7);
+      delCell.innerHTML = `<span class="delete-btn" onclick="deleteArrivalRow(${index})">🗑</span>`;
     }
   });
 }
+
 
 // --- Експорт складу у Excel ---
 function exportToExcel() {
@@ -918,6 +928,34 @@ async function handleDocxImport() {
   renderArrivalHistory();
   alert(`✅ Успішно імпортовано ${arrivalLog.length} записів`);
   fileInput.value = ""; // очищення поля завантаження
+}
+async function deleteInstallRow(index) {
+  if (!verifyPin()) {
+    alert("Невірний PIN-код!");
+    return;
+  }
+  const item = historyLog[index];
+  if (!confirm(`Видалити встановлення "${item.name}" (${item.date})?`)) return;
+
+  historyLog.splice(index, 1);
+  await saveToFirebase();
+  renderHistory();
+  alert("Запис видалено ✅");
+}
+async function deleteArrivalRow(index) {
+  if (!verifyPin()) {
+    alert("Невірний PIN-код!");
+    return;
+  }
+
+  const item = arrivalLog[index];
+  const confirmDel = confirm(`Видалити надходження "${item.name}" (${item.date})?`);
+  if (!confirmDel) return;
+
+  arrivalLog.splice(index, 1);
+  await saveToFirebase();
+  renderArrivalHistory();
+  alert("Запис успішно видалено ✅");
 }
 
 </script>
