@@ -82,7 +82,7 @@
   <input id="catalog" placeholder="Каталожний номер" autofocus>
   <input id="altCatalog" placeholder="№ не оригінал">
   <input id="name" placeholder="Найменування">
-  <input type="number" id="quantity" placeholder="Кількість" min="1">
+  <input type="number" id="quantity" placeholder="Кількість" min="0.01" step="any">
   <input id="location" placeholder="Місце зберігання">
   <input id="supplier" placeholder="Постачальник">
   <input type="date" id="installed">
@@ -264,6 +264,11 @@ window.onload = async () => {
   if (localStorage.getItem("authPassed") === "true") {
     document.getElementById("authScreen").style.display = "none";
   }
+  // --- Автоматична заміна коми на крапку у полі "Кількість"
+document.getElementById("quantity").addEventListener("input", function () {
+  this.value = this.value.replace(",", ".");
+});
+
 
   await loadFromFirebase(); // ✅ partsData вже є
 
