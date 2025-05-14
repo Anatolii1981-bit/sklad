@@ -841,13 +841,22 @@ function toggleArrivalHistory() {
 async function handleDocxImport() {
   const fileInput = document.getElementById("docxInput");
   const file = fileInput.files[0];
-  if (!file) return alert("Оберіть .docx файл для імпорту.");
+  if (!file) {
+    alert("Оберіть .docx файл для імпорту.");
+    return;
+  }
 
   const location = prompt("Введіть місце зберігання:");
-  if (!location) return alert("Місце зберігання обов'язкове!");
+  if (!location) {
+    alert("Місце зберігання обов'язкове!");
+    return;
+  }
 
   const supplier = prompt("Введіть постачальника:");
-  if (!supplier) return alert("Постачальник обов'язковий!");
+  if (!supplier) {
+    alert("Постачальник обов'язковий!");
+    return;
+  }
 
   const arrayBuffer = await file.arrayBuffer();
   const result = await mammoth.extractRawText({ arrayBuffer });
@@ -859,6 +868,8 @@ async function handleDocxImport() {
     .filter(line => line !== "");
 
   const entries = [];
+  const today = new Date().toLocaleDateString("uk-UA");
+
   for (let i = 0; i < lines.length - 2; i++) {
     const catalog = lines[i];
     const name = lines[i + 1];
@@ -866,36 +877,47 @@ async function handleDocxImport() {
     const qty = parseFloat(qtyRaw);
 
     if (
-      /^\d/.test(catalog) &&        // рядок починається з цифри (артикул)
+      /^\d/.test(catalog) && // артикул починається з цифри
       name.length > 2 &&
       !isNaN(qty)
     ) {
-      entries.push({
+      const entry = {
         catalog,
         altCatalog: "",
         name,
         quantity: qty,
         location,
         installed: "",
-        arrival: new Date().toLocaleDateString("uk-UA"),
+        arrival: today,
+        supplier
+      };
+
+      partsData.push(entry);
+
+      arrivalLog.push({
+        catalog,
+        altCatalog: "",
+        name,
+        qty,
+        date: today,
+        location,
         supplier
       });
 
-      i += 2; // пропускаємо наступні два рядки, бо вони вже оброблені
+      i += 2; // Пропускаємо ці рядки, бо вже оброблені
     }
   }
 
-  if (entries.length === 0) {
+  if (entries.length === 0 && arrivalLog.length === 0) {
     alert("Не знайдено жодного валідного запису.");
     return;
   }
 
-  partsData.push(...entries);
   await saveToFirebase();
   renderTable();
   renderArrivalHistory();
-  alert(`✅ Успішно імпортовано ${entries.length} записів`);
-  fileInput.value = "";
+  alert(`✅ Успішно імпортовано ${arrivalLog.length} записів`);
+  fileInput.value = ""; // очищення поля завантаження
 }
 
 </script>
