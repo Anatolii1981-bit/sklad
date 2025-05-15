@@ -627,10 +627,11 @@ function renderArrivalHistory() {
   tbody.innerHTML = "";
 
   arrivalLog.forEach((entry, index) => {
-    if (
-      entry.catalog.toLowerCase().includes(filter) ||
-      (entry.name && entry.name.toLowerCase().includes(filter))
-    ) {
+    const catalogMatch = entry.catalog.toLowerCase().includes(filter);
+    const nameMatch = entry.name && entry.name.toLowerCase().includes(filter);
+    const supplierMatch = entry.supplier && entry.supplier.toLowerCase().includes(filter);
+
+    if (catalogMatch || nameMatch || supplierMatch) {
       const row = tbody.insertRow();
       row.insertCell(0).textContent = entry.catalog;
       row.insertCell(1).textContent = entry.altCatalog || "";
@@ -645,6 +646,7 @@ function renderArrivalHistory() {
     }
   });
 }
+
 
 
 // --- Експорт складу у Excel ---
