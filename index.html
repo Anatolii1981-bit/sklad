@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Склад запчастей</title>
+    <title>Склад запчастей (Автономный)</title>
 
-    <script src="https://jsdelivr.net"></script>
+    <!-- Загрузка библиотеки Excel (если интернета нет, код всё равно продолжит работать) -->
+    <script src="https://jsdelivr.net" onerror="console.warn('Библиотека XLSX не загрузилась. Экспорт в Excel временно недоступен.')"></script>
 
     <style>
         * {
@@ -31,14 +32,12 @@
         }
 
         /* Панель добавления */
-
         .add-panel {
             background: white;
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
             margin-bottom: 20px;
-            transition: background 0.3s ease;
         }
 
         .add-panel h2 {
@@ -70,11 +69,11 @@
             border-color: #555;
         }
 
-        /* Подсветка дубликата для поля ввода */
+        /* Яркая подсветка дубликата для поля ввода */
         input.duplicate-found {
-            background-color: #fff3cd;
-            border-color: #ffc107;
-            color: #664d03;
+            background-color: #fff3cd !important;
+            border-color: #ffc107 !important;
+            color: #664d03 !important;
             font-weight: bold;
         }
 
@@ -89,24 +88,12 @@
             opacity: 0.85;
         }
 
-        .green {
-            background: #198754;
-        }
-
-        .red {
-            background: #dc3545;
-        }
-
-        .blue {
-            background: #0d6efd;
-        }
-
-        .gray {
-            background: #6c757d;
-        }
+        .green { background: #198754; }
+        .red { background: #dc3545; }
+        .blue { background: #0d6efd; }
+        .gray { background: #6c757d; }
 
         /* Информация */
-
         .info {
             display: flex;
             gap: 20px;
@@ -129,7 +116,6 @@
         }
 
         /* Поиск */
-
         .toolbar {
             background: white;
             padding: 15px;
@@ -146,7 +132,6 @@
         }
 
         /* Таблица */
-
         .table-container {
             background: white;
             border-radius: 12px;
@@ -160,8 +145,7 @@
             min-width: 750px;
         }
 
-        th,
-        td {
+        th, td {
             padding: 12px;
             border-bottom: 1px solid #ddd;
             text-align: left;
@@ -203,7 +187,6 @@
         }
 
         /* Подсказка */
-
         .hint {
             color: #666;
             margin-top: 10px;
@@ -222,7 +205,6 @@
         }
 
         /* Модальное окно */
-
         .modal {
             display: none;
             position: fixed;
@@ -275,28 +257,11 @@
             flex: 1;
         }
 
-        /* Мобильная версия */
-
         @media (max-width: 700px) {
-
-            .container {
-                padding: 10px;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .info-card {
-                flex: 1;
-                min-width: 140px;
-            }
-
-            th,
-            td {
-                padding: 8px;
-                font-size: 14px;
-            }
+            .container { padding: 10px; }
+            .form-row { grid-template-columns: 1fr; }
+            .info-card { flex: 1; min-width: 140px; }
+            th, td { padding: 8px; font-size: 14px; }
         }
     </style>
 </head>
@@ -308,113 +273,39 @@
     <h1>📦 Склад запчастей</h1>
 
     <!-- ДОБАВЛЕНИЕ -->
-
     <div class="add-panel">
-
         <h2>Добавить запчасть</h2>
-
         <div class="form-row">
-
-            <input
-                type="text"
-                id="catalogInput"
-                placeholder="Каталожный номер"
-                autocomplete="off"
-                oninput="checkDuplicate()"
-            >
-
-            <input
-                type="text"
-                id="nameInput"
-                placeholder="Название запчасти"
-                autocomplete="off"
-            >
-
-            <input
-                type="number"
-                id="quantityInput"
-                placeholder="Количество"
-                min="0.01"
-                step="0.01"
-            >
-
-            <button class="green" onclick="addPart()">
-                ➕ Добавить
-            </button>
-
+            <input type="text" id="catalogInput" placeholder="Каталожный номер" autocomplete="off">
+            <input type="text" id="nameInput" placeholder="Название запчасти" autocomplete="off">
+            <input type="number" id="quantityInput" placeholder="Количество" min="0.01" step="0.01">
+            <button class="green" id="addBtn">➕ Добавить</button>
         </div>
-
         <div class="hint" id="hintText">
             Если каталожный номер уже есть в таблице — количество автоматически прибавится к существующему.
         </div>
-
     </div>
-
 
     <!-- СТАТИСТИКА -->
-
     <div class="info">
-
-        <div class="info-card">
-            Всего позиций
-            <strong id="totalParts">0</strong>
-        </div>
-
-        <div class="info-card">
-            Всего деталей
-            <strong id="totalQuantity">0</strong>
-        </div>
-
+        <div class="info-card">Всего позиций <strong id="totalParts">0</strong></div>
+        <div class="info-card">Всего деталей <strong id="totalQuantity">0</strong></div>
     </div>
 
-
-    <!-- ПАНЕЛЬ -->
-
+    <!-- ПАНЕЛЬ УПРАВЛЕНИЯ -->
     <div class="toolbar">
-
-        <input
-            class="search"
-            type="text"
-            id="searchInput"
-            placeholder="🔎 Поиск по каталожному номеру или названию..."
-            oninput="renderTable()"
-        >
-
-        <button class="blue" onclick="sortParts()">
-            🔤 Сортировать
-        </button>
-
-        <button onclick="exportExcel()">
-            📊 Excel
-        </button>
-
-        <button class="gray" onclick="exportJSON()">
-            💾 Сохранить базу
-        </button>
-
-        <button class="gray" onclick="document.getElementById('importFile').click()">
-            📂 Загрузить базу
-        </button>
-
-        <input
-            type="file"
-            id="importFile"
-            accept=".json"
-            style="display:none"
-            onchange="importJSON(event)"
-        >
-
+        <input class="search" type="text" id="searchInput" placeholder="🔎 Поиск по каталожному номеру или названию...">
+        <button class="blue" id="sortBtn">🔤 Сортировать</button>
+        <button id="excelBtn">📊 Excel</button>
+        <button class="gray" id="saveJsonBtn">💾 Сохранить базу</button>
+        <button class="gray" id="loadJsonBtn">📂 Загрузить базу</button>
+        <input type="file" id="importFile" accept=".json" style="display:none">
     </div>
-
 
     <!-- ТАБЛИЦА -->
-
     <div class="table-container">
-
         <table>
-
             <thead>
-
                 <tr>
                     <th>№</th>
                     <th>Каталожный номер</th>
@@ -422,49 +313,46 @@
                     <th style="text-align:center; width: 120px;">Количество</th>
                     <th style="text-align:center; width: 200px;">Действия</th>
                 </tr>
-
             </thead>
-
             <tbody id="partsTableBody"></tbody>
-
         </table>
-
     </div>
 
 </div>
-
 
 <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ -->
-
 <div class="modal" id="editModal">
-
     <div class="modal-content">
-
         <h2>✏️ Редактировать запчасть</h2>
-        
         <input type="hidden" id="editIndex">
-
         <label for="editCatalogInput">Каталожный номер:</label>
         <input type="text" id="editCatalogInput" autocomplete="off">
-
         <label for="editNameInput">Название детали:</label>
         <input type="text" id="editNameInput" autocomplete="off">
-
         <label for="editQuantityInput">Количество:</label>
         <input type="number" id="editQuantityInput" min="0" step="0.01">
-
         <div class="modal-buttons">
-            <button class="green" onclick="saveEdit()">Сохранить</button>
-            <button class="gray" onclick="closeModal()">Отмена</button>
+            <button class="green" id="saveEditBtn">Сохранить</button>
+            <button class="gray" id="closeModalBtn">Отмена</button>
         </div>
-
     </div>
-
 </div>
 
-<!-- ЛОГИКА ПРИЛОЖЕНИЯ (JS) -->
+<!-- ЛОГИКА ПРИЛОЖЕНИЯ -->
 <script>
+    // Массив данных
     let parts = [];
     let currentSortOrder = 'asc';
 
-    window.onload = function() {
+    // Запуск приложения после полной загрузки HTML-страницы
+    document.addEventListener("DOMContentLoaded", function() {
+        // Подключаем все кнопки к функциям напрямую (защита от сбоев)
+        document.getElementById('addBtn').addEventListener('click', addPart);
+        document.getElementById('sortBtn').addEventListener('click', sortParts);
+        document.getElementById('excelBtn').addEventListener('click', exportExcel);
+        document.getElementById('saveJsonBtn').addEventListener('click', exportJSON);
+        document.getElementById('loadJsonBtn').addEventListener('click', () => document.getElementById('importFile').click());
+        document.getElementById('importFile').addEventListener('change', importJSON);
+        document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
+        document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+        
