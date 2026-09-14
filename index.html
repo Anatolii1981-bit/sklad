@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Склад запчастей (Автономный)</title>
+    <title>Склад запчастей</title>
 
-    <!-- Загрузка библиотеки Excel (если интернета нет, код всё равно продолжит работать) -->
-    <script src="https://jsdelivr.net" onerror="console.warn('Библиотека XLSX не загрузилась. Экспорт в Excel временно недоступен.')"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
         * {
@@ -32,6 +31,7 @@
         }
 
         /* Панель добавления */
+
         .add-panel {
             background: white;
             padding: 20px;
@@ -61,20 +61,11 @@
         input {
             border: 1px solid #ccc;
             width: 100%;
-            transition: all 0.2s ease;
         }
 
         input:focus {
             outline: none;
             border-color: #555;
-        }
-
-        /* Яркая подсветка дубликата для поля ввода */
-        input.duplicate-found {
-            background-color: #fff3cd !important;
-            border-color: #ffc107 !important;
-            color: #664d03 !important;
-            font-weight: bold;
         }
 
         button {
@@ -88,12 +79,24 @@
             opacity: 0.85;
         }
 
-        .green { background: #198754; }
-        .red { background: #dc3545; }
-        .blue { background: #0d6efd; }
-        .gray { background: #6c757d; }
+        .green {
+            background: #198754;
+        }
+
+        .red {
+            background: #dc3545;
+        }
+
+        .blue {
+            background: #0d6efd;
+        }
+
+        .gray {
+            background: #6c757d;
+        }
 
         /* Информация */
+
         .info {
             display: flex;
             gap: 20px;
@@ -116,6 +119,7 @@
         }
 
         /* Поиск */
+
         .toolbar {
             background: white;
             padding: 15px;
@@ -132,6 +136,7 @@
         }
 
         /* Таблица */
+
         .table-container {
             background: white;
             border-radius: 12px;
@@ -145,7 +150,8 @@
             min-width: 750px;
         }
 
-        th, td {
+        th,
+        td {
             padding: 12px;
             border-bottom: 1px solid #ddd;
             text-align: left;
@@ -169,7 +175,6 @@
 
         .actions {
             white-space: nowrap;
-            text-align: center;
         }
 
         .actions button {
@@ -187,24 +192,15 @@
         }
 
         /* Подсказка */
+
         .hint {
             color: #666;
             margin-top: 10px;
             font-size: 14px;
-            transition: all 0.2s ease;
-        }
-
-        /* Стиль для предупреждения о дубликате */
-        .hint.warning-active {
-            color: #b60000;
-            font-weight: bold;
-            background: #f8d7da;
-            padding: 8px 12px;
-            border-radius: 6px;
-            display: inline-block;
         }
 
         /* Модальное окно */
+
         .modal {
             display: none;
             position: fixed;
@@ -235,14 +231,6 @@
             margin-top: 0;
         }
 
-        .modal-content label {
-            display: block;
-            margin-top: 10px;
-            margin-bottom: 5px;
-            font-size: 14px;
-            color: #555;
-        }
-
         .modal-content input {
             margin-bottom: 12px;
         }
@@ -257,11 +245,28 @@
             flex: 1;
         }
 
+        /* Мобильная версия */
+
         @media (max-width: 700px) {
-            .container { padding: 10px; }
-            .form-row { grid-template-columns: 1fr; }
-            .info-card { flex: 1; min-width: 140px; }
-            th, td { padding: 8px; font-size: 14px; }
+
+            .container {
+                padding: 10px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .info-card {
+                flex: 1;
+                min-width: 140px;
+            }
+
+            th,
+            td {
+                padding: 8px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -273,86 +278,1268 @@
     <h1>📦 Склад запчастей</h1>
 
     <!-- ДОБАВЛЕНИЕ -->
+
     <div class="add-panel">
+
         <h2>Добавить запчасть</h2>
+
         <div class="form-row">
-            <input type="text" id="catalogInput" placeholder="Каталожный номер" autocomplete="off">
-            <input type="text" id="nameInput" placeholder="Название запчасти" autocomplete="off">
-            <input type="number" id="quantityInput" placeholder="Количество" min="0.01" step="0.01">
-            <button class="green" id="addBtn">➕ Добавить</button>
+
+            <input
+                type="text"
+                id="catalogInput"
+                placeholder="Каталожный номер"
+                autocomplete="off"
+            >
+
+            <input
+                type="text"
+                id="nameInput"
+                placeholder="Название запчасти"
+                autocomplete="off"
+            >
+
+            <input
+                type="number"
+                id="quantityInput"
+                placeholder="Количество"
+                min="0.01"
+                step="0.01"
+            >
+
+            <button class="green" onclick="addPart()">
+                ➕ Добавить
+            </button>
+
         </div>
-        <div class="hint" id="hintText">
+
+        <div class="hint">
             Если каталожный номер уже есть в таблице — количество автоматически прибавится к существующему.
         </div>
+
     </div>
+
 
     <!-- СТАТИСТИКА -->
+
     <div class="info">
-        <div class="info-card">Всего позиций <strong id="totalParts">0</strong></div>
-        <div class="info-card">Всего деталей <strong id="totalQuantity">0</strong></div>
+
+        <div class="info-card">
+            Всего позиций
+            <strong id="totalParts">0</strong>
+        </div>
+
+        <div class="info-card">
+            Всего деталей
+            <strong id="totalQuantity">0</strong>
+        </div>
+
     </div>
 
-    <!-- ПАНЕЛЬ УПРАВЛЕНИЯ -->
+
+    <!-- ПАНЕЛЬ -->
+
     <div class="toolbar">
-        <input class="search" type="text" id="searchInput" placeholder="🔎 Поиск по каталожному номеру или названию...">
-        <button class="blue" id="sortBtn">🔤 Сортировать</button>
-        <button id="excelBtn">📊 Excel</button>
-        <button class="gray" id="saveJsonBtn">💾 Сохранить базу</button>
-        <button class="gray" id="loadJsonBtn">📂 Загрузить базу</button>
-        <input type="file" id="importFile" accept=".json" style="display:none">
+
+        <input
+            class="search"
+            type="text"
+            id="searchInput"
+            placeholder="🔎 Поиск по каталожному номеру или названию..."
+            oninput="renderTable()"
+        >
+
+        <button class="blue" onclick="sortParts()">
+            🔤 Сортировать
+        </button>
+
+        <button onclick="exportExcel()">
+            📊 Excel
+        </button>
+
+        <button class="gray" onclick="exportJSON()">
+            💾 Сохранить базу
+        </button>
+
+        <button class="gray" onclick="document.getElementById('importFile').click()">
+            📂 Загрузить базу
+        </button>
+
+        <input
+            type="file"
+            id="importFile"
+            accept=".json"
+            style="display:none"
+            onchange="importJSON(event)"
+        >
+
     </div>
+
 
     <!-- ТАБЛИЦА -->
+
     <div class="table-container">
+
         <table>
+
             <thead>
+
                 <tr>
                     <th>№</th>
                     <th>Каталожный номер</th>
                     <th>Название</th>
-                    <th style="text-align:center; width: 120px;">Количество</th>
-                    <th style="text-align:center; width: 200px;">Действия</th>
+                    <th style="text-align:center;">Количество</th>
+                    <th style="text-align:center;">Действия</th>
                 </tr>
+
             </thead>
+
             <tbody id="partsTableBody"></tbody>
+
         </table>
+
     </div>
 
 </div>
+
 
 <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ -->
+
 <div class="modal" id="editModal">
+
     <div class="modal-content">
-        <h2>✏️ Редактировать запчасть</h2>
-        <input type="hidden" id="editIndex">
-        <label for="editCatalogInput">Каталожный номер:</label>
-        <input type="text" id="editCatalogInput" autocomplete="off">
-        <label for="editNameInput">Название детали:</label>
-        <input type="text" id="editNameInput" autocomplete="off">
-        <label for="editQuantityInput">Количество:</label>
-        <input type="number" id="editQuantityInput" min="0" step="0.01">
+
+        <h2>✏️ Редактирование</h2>
+
+        <input
+            type="text"
+            id="editCatalog"
+            placeholder="Каталожный номер"
+        >
+
+        <input
+            type="text"
+            id="editName"
+            placeholder="Название"
+        >
+
+        <input
+            type="number"
+            id="editQuantity"
+            placeholder="Количество"
+            min="0"
+            step="0.01"
+        >
+
         <div class="modal-buttons">
-            <button class="green" id="saveEditBtn">Сохранить</button>
-            <button class="gray" id="closeModalBtn">Отмена</button>
+
+            <button class="green" onclick="saveEdit()">
+                💾 Сохранить
+            </button>
+
+            <button class="gray" onclick="closeEdit()">
+                Отмена
+            </button>
+
         </div>
+
     </div>
+
 </div>
 
-<!-- ЛОГИКА ПРИЛОЖЕНИЯ -->
-<script>
-    // Массив данных
-    let parts = [];
-    let currentSortOrder = 'asc';
 
-    // Запуск приложения после полной загрузки HTML-страницы
-    document.addEventListener("DOMContentLoaded", function() {
-        // Подключаем все кнопки к функциям напрямую (защита от сбоев)
-        document.getElementById('addBtn').addEventListener('click', addPart);
-        document.getElementById('sortBtn').addEventListener('click', sortParts);
-        document.getElementById('excelBtn').addEventListener('click', exportExcel);
-        document.getElementById('saveJsonBtn').addEventListener('click', exportJSON);
-        document.getElementById('loadJsonBtn').addEventListener('click', () => document.getElementById('importFile').click());
-        document.getElementById('importFile').addEventListener('change', importJSON);
-        document.getElementById('saveEditBtn').addEventListener('click', saveEdit);
-        document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-        
+<script>
+
+    /*
+     * ==========================================
+     * БАЗА ДАННЫХ
+     * ==========================================
+     */
+
+    let parts = [];
+
+    let editIndex = null;
+
+    let sortDirection = 1;
+
+
+    /*
+     * ==========================================
+     * ЗАГРУЗКА ДАННЫХ
+     * ==========================================
+     */
+
+    function loadData() {
+
+        const saved = localStorage.getItem("warehouseParts");
+
+        if (saved) {
+
+            try {
+
+                parts = JSON.parse(saved);
+
+            } catch (error) {
+
+                parts = [];
+
+            }
+
+        }
+
+        renderTable();
+
+    }
+
+
+    /*
+     * ==========================================
+     * СОХРАНЕНИЕ ДАННЫХ
+     * ==========================================
+     */
+
+    function saveData() {
+
+        localStorage.setItem(
+            "warehouseParts",
+            JSON.stringify(parts)
+        );
+
+    }
+
+
+    /*
+     * ==========================================
+     * ДОБАВЛЕНИЕ ЗАПЧАСТИ
+     * ==========================================
+     */
+
+    function addPart() {
+
+        const catalogInput =
+            document.getElementById("catalogInput");
+
+        const nameInput =
+            document.getElementById("nameInput");
+
+        const quantityInput =
+            document.getElementById("quantityInput");
+
+
+        const catalog =
+            catalogInput.value.trim();
+
+        const name =
+            nameInput.value.trim();
+
+        const quantity =
+            parseFloat(
+                quantityInput.value.replace(",", ".")
+            );
+
+
+        // Проверка каталожного номера
+
+        if (!catalog) {
+
+            alert("Введите каталожный номер!");
+
+            catalogInput.focus();
+
+            return;
+
+        }
+
+
+        // Проверка количества
+
+        if (
+            isNaN(quantity) ||
+            quantity <= 0
+        ) {
+
+            alert("Введите правильное количество!");
+
+            quantityInput.focus();
+
+            return;
+
+        }
+
+
+        /*
+         * Ищем существующий каталожный номер.
+         */
+
+        const existingIndex = parts.findIndex(
+            part =>
+                part.catalog.toLowerCase() ===
+                catalog.toLowerCase()
+        );
+
+
+        /*
+         * ======================================
+         * ЗАПЧАСТЬ УЖЕ ЕСТЬ
+         * ======================================
+         */
+
+        if (existingIndex !== -1) {
+
+            const existing = parts[existingIndex];
+
+
+            /*
+             * Если название не введено,
+             * оставляем старое.
+             */
+
+            if (name) {
+
+                existing.name = name;
+
+            }
+
+
+            /*
+             * Прибавляем количество.
+             */
+
+            existing.quantity =
+                roundNumber(
+                    existing.quantity + quantity
+                );
+
+
+            alert(
+                `Запчасть уже была в складе.\n\n` +
+                `Каталожный номер: ${existing.catalog}\n` +
+                `Количество добавлено: +${quantity}\n` +
+                `Новый остаток: ${existing.quantity}`
+            );
+
+        }
+
+        /*
+         * ======================================
+         * НОВАЯ ЗАПЧАСТЬ
+         * ======================================
+         */
+
+        else {
+
+            if (!name) {
+
+                alert("Для новой запчасти введите название!");
+
+                nameInput.focus();
+
+                return;
+
+            }
+
+
+            parts.push({
+
+                catalog: catalog,
+
+                name: name,
+
+                quantity: quantity
+
+            });
+
+        }
+
+
+        saveData();
+
+        renderTable();
+
+
+        /*
+         * Очищаем поля.
+         */
+
+        catalogInput.value = "";
+
+        nameInput.value = "";
+
+        quantityInput.value = "";
+
+
+        /*
+         * Возвращаем курсор
+         * на каталожный номер.
+         */
+
+        catalogInput.focus();
+
+    }
+
+
+    /*
+     * ==========================================
+     * ОКРУГЛЕНИЕ
+     * ==========================================
+     */
+
+    function roundNumber(number) {
+
+        return Math.round(
+            number * 100
+        ) / 100;
+
+    }
+
+
+    /*
+     * ==========================================
+     * ПОКАЗ ТАБЛИЦЫ
+     * ==========================================
+     */
+
+    function renderTable() {
+
+        const tbody =
+            document.getElementById("partsTableBody");
+
+        const search =
+            document
+                .getElementById("searchInput")
+                .value
+                .trim()
+                .toLowerCase();
+
+
+        tbody.innerHTML = "";
+
+
+        /*
+         * Фильтруем данные.
+         */
+
+        const filteredParts =
+            parts.filter(part => {
+
+                return (
+
+                    part.catalog
+                        .toLowerCase()
+                        .includes(search)
+
+                    ||
+
+                    part.name
+                        .toLowerCase()
+                        .includes(search)
+
+                );
+
+            });
+
+
+        /*
+         * Если ничего нет.
+         */
+
+        if (filteredParts.length === 0) {
+
+            tbody.innerHTML = `
+
+                <tr>
+
+                    <td
+                        colspan="5"
+                        class="empty"
+                    >
+                        Запчастей пока нет
+                    </td>
+
+                </tr>
+
+            `;
+
+            updateStatistics();
+
+            return;
+
+        }
+
+
+        /*
+         * Создаём строки.
+         */
+
+        filteredParts.forEach(
+            (part) => {
+
+                const realIndex =
+                    parts.indexOf(part);
+
+
+                const row =
+                    document.createElement("tr");
+
+
+                row.innerHTML = `
+
+                    <td>
+                        ${realIndex + 1}
+                    </td>
+
+                    <td>
+                        <strong>
+                            ${escapeHTML(part.catalog)}
+                        </strong>
+                    </td>
+
+                    <td>
+                        ${escapeHTML(part.name)}
+                    </td>
+
+                    <td class="quantity">
+                        ${part.quantity}
+                    </td>
+
+                    <td class="actions">
+
+                        <button
+                            class="green"
+                            title="Добавить количество"
+                            onclick="addQuantity(${realIndex})"
+                        >
+                            +
+                        </button>
+
+                        <button
+                            class="red"
+                            title="Списать количество"
+                            onclick="removeQuantity(${realIndex})"
+                        >
+                            −
+                        </button>
+
+                        <button
+                            class="blue"
+                            title="Редактировать"
+                            onclick="editPart(${realIndex})"
+                        >
+                            ✏️
+                        </button>
+
+                        <button
+                            class="red"
+                            title="Удалить строку"
+                            onclick="deletePart(${realIndex})"
+                        >
+                            🗑
+                        </button>
+
+                    </td>
+
+                `;
+
+
+                tbody.appendChild(row);
+
+            }
+        );
+
+
+        updateStatistics();
+
+    }
+
+
+    /*
+     * ==========================================
+     * ДОБАВИТЬ КОЛИЧЕСТВО
+     * ==========================================
+     */
+
+    function addQuantity(index) {
+
+        const value =
+            prompt(
+                `Сколько добавить к "${parts[index].name}"?`
+            );
+
+
+        if (value === null) {
+            return;
+        }
+
+
+        const quantity =
+            parseFloat(
+                value.replace(",", ".")
+            );
+
+
+        if (
+            isNaN(quantity) ||
+            quantity <= 0
+        ) {
+
+            alert("Введите правильное количество!");
+
+            return;
+
+        }
+
+
+        parts[index].quantity =
+            roundNumber(
+                parts[index].quantity + quantity
+            );
+
+
+        saveData();
+
+        renderTable();
+
+    }
+
+
+    /*
+     * ==========================================
+     * СПИСАТЬ КОЛИЧЕСТВО
+     * ==========================================
+     */
+
+    function removeQuantity(index) {
+
+        const value =
+            prompt(
+                `Сколько списать из "${parts[index].name}"?\n\n` +
+                `Сейчас на складе: ${parts[index].quantity}`
+            );
+
+
+        if (value === null) {
+            return;
+        }
+
+
+        const quantity =
+            parseFloat(
+                value.replace(",", ".")
+            );
+
+
+        if (
+            isNaN(quantity) ||
+            quantity <= 0
+        ) {
+
+            alert("Введите правильное количество!");
+
+            return;
+
+        }
+
+
+        if (
+            quantity >
+            parts[index].quantity
+        ) {
+
+            alert(
+                "Нельзя списать больше, чем есть на складе!"
+            );
+
+            return;
+
+        }
+
+
+        parts[index].quantity =
+            roundNumber(
+                parts[index].quantity - quantity
+            );
+
+
+        /*
+         * Если стало 0,
+         * спрашиваем удалить строку.
+         */
+
+        if (parts[index].quantity === 0) {
+
+            const remove =
+                confirm(
+                    "Количество стало 0.\n\n" +
+                    "Удалить эту запчасть из таблицы?"
+                );
+
+
+            if (remove) {
+
+                parts.splice(index, 1);
+
+            }
+
+        }
+
+
+        saveData();
+
+        renderTable();
+
+    }
+
+
+    /*
+     * ==========================================
+     * РЕДАКТИРОВАНИЕ
+     * ==========================================
+     */
+
+    function editPart(index) {
+
+        editIndex = index;
+
+
+        document.getElementById("editCatalog").value =
+            parts[index].catalog;
+
+
+        document.getElementById("editName").value =
+            parts[index].name;
+
+
+        document.getElementById("editQuantity").value =
+            parts[index].quantity;
+
+
+        document
+            .getElementById("editModal")
+            .classList
+            .add("show");
+
+    }
+
+
+    /*
+     * ==========================================
+     * СОХРАНИТЬ РЕДАКТИРОВАНИЕ
+     * ==========================================
+     */
+
+    function saveEdit() {
+
+        if (editIndex === null) {
+            return;
+        }
+
+
+        const catalog =
+            document
+                .getElementById("editCatalog")
+                .value
+                .trim();
+
+
+        const name =
+            document
+                .getElementById("editName")
+                .value
+                .trim();
+
+
+        const quantity =
+            parseFloat(
+                document
+                    .getElementById("editQuantity")
+                    .value
+                    .replace(",", ".")
+            );
+
+
+        if (!catalog) {
+
+            alert("Введите каталожный номер!");
+
+            return;
+
+        }
+
+
+        if (!name) {
+
+            alert("Введите название!");
+
+            return;
+
+        }
+
+
+        if (
+            isNaN(quantity) ||
+            quantity < 0
+        ) {
+
+            alert("Введите правильное количество!");
+
+            return;
+
+        }
+
+
+        /*
+         * Проверяем,
+         * не занят ли каталожный номер
+         * другой строкой.
+         */
+
+        const duplicate =
+            parts.some(
+                (part, index) =>
+
+                    index !== editIndex &&
+
+                    part.catalog.toLowerCase() ===
+                    catalog.toLowerCase()
+
+            );
+
+
+        if (duplicate) {
+
+            alert(
+                "Такой каталожный номер уже существует!"
+            );
+
+            return;
+
+        }
+
+
+        parts[editIndex].catalog =
+            catalog;
+
+        parts[editIndex].name =
+            name;
+
+        parts[editIndex].quantity =
+            roundNumber(quantity);
+
+
+        saveData();
+
+        renderTable();
+
+        closeEdit();
+
+    }
+
+
+    /*
+     * ==========================================
+     * ЗАКРЫТЬ РЕДАКТИРОВАНИЕ
+     * ==========================================
+     */
+
+    function closeEdit() {
+
+        editIndex = null;
+
+        document
+            .getElementById("editModal")
+            .classList
+            .remove("show");
+
+    }
+
+
+    /*
+     * ==========================================
+     * УДАЛЕНИЕ СТРОКИ
+     * ==========================================
+     */
+
+    function deletePart(index) {
+
+        const part = parts[index];
+
+
+        const confirmed =
+            confirm(
+                `Удалить запчасть?\n\n` +
+                `${part.catalog}\n` +
+                `${part.name}\n` +
+                `Количество: ${part.quantity}`
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        parts.splice(index, 1);
+
+
+        saveData();
+
+        renderTable();
+
+    }
+
+
+    /*
+     * ==========================================
+     * СОРТИРОВКА
+     * ==========================================
+     */
+
+    function sortParts() {
+
+        parts.sort(
+            (a, b) => {
+
+                const result =
+                    a.catalog.localeCompare(
+                        b.catalog,
+                        undefined,
+                        {
+                            numeric: true,
+                            sensitivity: "base"
+                        }
+                    );
+
+                return result * sortDirection;
+
+            }
+        );
+
+
+        sortDirection *= -1;
+
+
+        saveData();
+
+        renderTable();
+
+    }
+
+
+    /*
+     * ==========================================
+     * СТАТИСТИКА
+     * ==========================================
+     */
+
+    function updateStatistics() {
+
+        document.getElementById("totalParts")
+            .textContent =
+            parts.length;
+
+
+        const total =
+            parts.reduce(
+                (sum, part) =>
+                    sum + Number(part.quantity),
+                0
+            );
+
+
+        document.getElementById("totalQuantity")
+            .textContent =
+            roundNumber(total);
+
+    }
+
+
+    /*
+     * ==========================================
+     * ЭКСПОРТ В EXCEL
+     * ==========================================
+     */
+
+    function exportExcel() {
+
+        if (parts.length === 0) {
+
+            alert("Склад пуст!");
+
+            return;
+
+        }
+
+
+        const data =
+            parts.map(
+                (part, index) => ({
+
+                    "№":
+                        index + 1,
+
+                    "Каталожный номер":
+                        part.catalog,
+
+                    "Название":
+                        part.name,
+
+                    "Количество":
+                        part.quantity
+
+                })
+            );
+
+
+        const worksheet =
+            XLSX.utils.json_to_sheet(data);
+
+
+        const workbook =
+            XLSX.utils.book_new();
+
+
+        XLSX.utils.book_append_sheet(
+            workbook,
+            worksheet,
+            "Склад"
+        );
+
+
+        XLSX.writeFile(
+            workbook,
+            "склад_запчастей.xlsx"
+        );
+
+    }
+
+
+    /*
+     * ==========================================
+     * СОХРАНЕНИЕ БАЗЫ JSON
+     * ==========================================
+     */
+
+    function exportJSON() {
+
+        const data =
+            JSON.stringify(
+                parts,
+                null,
+                2
+            );
+
+
+        const blob =
+            new Blob(
+                [data],
+                {
+                    type: "application/json"
+                }
+            );
+
+
+        const url =
+            URL.createObjectURL(blob);
+
+
+        const link =
+            document.createElement("a");
+
+
+        link.href = url;
+
+        link.download =
+            "склад_запчастей_backup.json";
+
+
+        link.click();
+
+
+        URL.revokeObjectURL(url);
+
+    }
+
+
+    /*
+     * ==========================================
+     * ЗАГРУЗКА БАЗЫ JSON
+     * ==========================================
+     */
+
+    function importJSON(event) {
+
+        const file =
+            event.target.files[0];
+
+
+        if (!file) {
+            return;
+        }
+
+
+        const reader =
+            new FileReader();
+
+
+        reader.onload =
+            function(e) {
+
+                try {
+
+                    const imported =
+                        JSON.parse(
+                            e.target.result
+                        );
+
+
+                    if (!Array.isArray(imported)) {
+
+                        throw new Error(
+                            "Неверный формат файла"
+                        );
+
+                    }
+
+
+                    parts = imported;
+
+
+                    saveData();
+
+                    renderTable();
+
+
+                    alert(
+                        `Загружено позиций: ${parts.length}`
+                    );
+
+
+                } catch (error) {
+
+                    alert(
+                        "Не удалось загрузить файл!"
+                    );
+
+                }
+
+            };
+
+
+        reader.readAsText(file);
+
+
+        event.target.value = "";
+
+    }
+
+
+    /*
+     * ==========================================
+     * ЗАЩИТА HTML
+     * ==========================================
+     */
+
+    function escapeHTML(text) {
+
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+    }
+
+
+    /*
+     * ==========================================
+     * ENTER
+     * ==========================================
+     */
+
+    document
+        .getElementById("catalogInput")
+        .addEventListener(
+            "keydown",
+            function(event) {
+
+                if (event.key === "Enter") {
+
+                    document
+                        .getElementById("nameInput")
+                        .focus();
+
+                }
+
+            }
+        );
+
+
+    document
+        .getElementById("nameInput")
+        .addEventListener(
+            "keydown",
+            function(event) {
+
+                if (event.key === "Enter") {
+
+                    document
+                        .getElementById("quantityInput")
+                        .focus();
+
+                }
+
+            }
+        );
+
+
+    document
+        .getElementById("quantityInput")
+        .addEventListener(
+            "keydown",
+            function(event) {
+
+                if (event.key === "Enter") {
+
+                    addPart();
+
+                }
+
+            }
+        );
+
+
+    /*
+     * ==========================================
+     * ЗАКРЫТИЕ МОДАЛЬНОГО ОКНА
+     * ==========================================
+     */
+
+    document
+        .getElementById("editModal")
+        .addEventListener(
+            "click",
+            function(event) {
+
+                if (event.target === this) {
+
+                    closeEdit();
+
+                }
+
+            }
+        );
+
+
+    /*
+     * ==========================================
+     * ЗАПУСК
+     * ==========================================
+     */
+
+    loadData();
+
+</script>
+
+</body>
+</html>
